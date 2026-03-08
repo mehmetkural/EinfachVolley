@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Destek | Uygulama</title>
+  <meta name="description" content="Uygulamanız için destek ve yardım sayfası.">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #0a0a0a;
+      --muted: #5f6368;
+      --accent: #007aff;
+      --card: #f6f7f8;
+      --border: #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0b0c;
+        --fg: #f2f3f5;
+        --muted: #b0b3b8;
+        --accent: #0a84ff;
+        --card: #151517;
+        --border: #2a2a2d;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .container {
+      max-width: 840px;
+      padding: 24px;
+      margin: 0 auto;
+    }
+    header {
+      padding: 24px 0 8px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin: 0 0 4px 0;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    h2 { font-size: 1.25rem; margin: 0 0 8px 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:focus, a:hover { text-decoration: underline; }
+    .list { margin: 0; padding-left: 18px; }
+    .meta { color: var(--muted); font-size: 0.95rem; }
+    footer { margin-top: 32px; padding: 16px 0 32px; color: var(--muted); font-size: 0.9rem; }
+    code.badge { background: var(--border); color: var(--fg); padding: 2px 6px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Destek</h1>
+      <p>Yardım mı gerekiyor? Ekibimiz size en kısa sürede yardımcı olmak için burada.</p>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="contact-title">
+        <h2 id="contact-title">Bize Ulaşın</h2>
+        <p>Destek ekibimize aşağıdaki kanallardan ulaşabilirsiniz:</p>
+        <ul class="list">
+          <li>E-posta: <a href="mailto:support@ornekdomena.com">support@ornekdomena.com</a></li>
+          <li>SSS: <a href="#" aria-label="Sıkça Sorulan Sorular bağlantısı">Sıkça Sorulan Sorular</a></li>
+        </ul>
+        <p class="meta">Yanıt sürelerimiz genellikle 1-2 iş günüdür.</p>
+      </section>
+
+      <section class="card" aria-labelledby="info-title">
+        <h2 id="info-title">Hızlı Bilgiler</h2>
+        <ul class="list">
+          <li>Uygulama sürümü: <code class="badge">1.0.0</code></li>
+          <li>Son güncelleme: <time datetime="2026-03-08">8 Mart 2026</time></li>
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="policies-title">
+        <h2 id="policies-title">Politikalar</h2>
+        <ul class="list">
+          <li>Gizlilik Politikası: <a href="#">Görüntüle</a></li>
+          <li>Kullanım Şartları: <a href="#">Görüntüle</a></li>
+        </ul>
+        <p class="meta">Bu sayfa App Store “Support URL” alanında kullanılabilir.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>© <span id="year"></span> Şirket Adı. Tüm hakları saklıdır.</p>
+    </footer>
+  </div>
+  <script>
+    // Yılı otomatik güncelle
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
