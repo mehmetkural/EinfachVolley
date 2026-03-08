@@ -1,115 +1,233 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Destek | Uygulama</title>
-  <meta name="description" content="Uygulamanız için destek ve yardım sayfası.">
-  <style>
-    :root {
-      --bg: #ffffff;
-      --fg: #0a0a0a;
-      --muted: #5f6368;
-      --accent: #007aff;
-      --card: #f6f7f8;
-      --border: #e5e7eb;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0b0b0c;
-        --fg: #f2f3f5;
-        --muted: #b0b3b8;
-        --accent: #0a84ff;
-        --card: #151517;
-        --border: #2a2a2d;
-      }
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    .container {
-      max-width: 840px;
-      padding: 24px;
-      margin: 0 auto;
-    }
-    header {
-      padding: 24px 0 8px;
-    }
-    header h1 {
-      font-size: 2rem;
-      margin: 0 0 4px 0;
-    }
-    header p {
-      margin: 0;
-      color: var(--muted);
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      margin: 16px 0;
-    }
-    h2 { font-size: 1.25rem; margin: 0 0 8px 0; }
-    a { color: var(--accent); text-decoration: none; }
-    a:focus, a:hover { text-decoration: underline; }
-    .list { margin: 0; padding-left: 18px; }
-    .meta { color: var(--muted); font-size: 0.95rem; }
-    footer { margin-top: 32px; padding: 16px 0 32px; color: var(--muted); font-size: 0.9rem; }
-    code.badge { background: var(--border); color: var(--fg); padding: 2px 6px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support</title>
+
+<style>
+:root{
+--bg:#ffffff;
+--fg:#0a0a0a;
+--muted:#5f6368;
+--accent:#007aff;
+--card:#f6f7f8;
+--border:#e5e7eb;
+}
+
+@media (prefers-color-scheme: dark){
+:root{
+--bg:#0b0b0c;
+--fg:#f2f3f5;
+--muted:#b0b3b8;
+--accent:#0a84ff;
+--card:#151517;
+--border:#2a2a2d;
+}
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+background:var(--bg);
+color:var(--fg);
+line-height:1.6;
+}
+
+.container{
+max-width:840px;
+padding:24px;
+margin:auto;
+}
+
+.lang{
+display:flex;
+gap:8px;
+margin-bottom:10px;
+}
+
+.lang button{
+border:1px solid var(--border);
+background:var(--card);
+padding:6px 12px;
+border-radius:8px;
+cursor:pointer;
+}
+
+.lang button:hover{
+background:var(--border);
+}
+
+header h1{
+font-size:2rem;
+margin:0 0 4px 0;
+}
+
+header p{
+margin:0;
+color:var(--muted);
+}
+
+.card{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:14px;
+padding:20px;
+margin:16px 0;
+}
+
+h2{margin:0 0 8px}
+
+a{color:var(--accent);text-decoration:none}
+
+a:hover{text-decoration:underline}
+
+.list{padding-left:18px}
+
+.meta{color:var(--muted);font-size:.95rem}
+
+footer{
+margin-top:32px;
+color:var(--muted);
+font-size:.9rem;
+}
+
+code.badge{
+background:var(--border);
+padding:2px 6px;
+border-radius:6px;
+font-size:.85em;
+}
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <h1>Destek</h1>
-      <p>Yardım mı gerekiyor? Ekibimiz size en kısa sürede yardımcı olmak için burada.</p>
-    </header>
 
-    <main>
-      <section class="card" aria-labelledby="contact-title">
-        <h2 id="contact-title">Bize Ulaşın</h2>
-        <p>Destek ekibimize aşağıdaki kanallardan ulaşabilirsiniz:</p>
-        <ul class="list">
-          <li>E-posta: <a href="mailto:support@ornekdomena.com">support@ornekdomena.com</a></li>
-          <li>SSS: <a href="#" aria-label="Sıkça Sorulan Sorular bağlantısı">Sıkça Sorulan Sorular</a></li>
-        </ul>
-        <p class="meta">Yanıt sürelerimiz genellikle 1-2 iş günüdür.</p>
-      </section>
+<div class="container">
 
-      <section class="card" aria-labelledby="info-title">
-        <h2 id="info-title">Hızlı Bilgiler</h2>
-        <ul class="list">
-          <li>Uygulama sürümü: <code class="badge">1.0.0</code></li>
-          <li>Son güncelleme: <time datetime="2026-03-08">8 Mart 2026</time></li>
-        </ul>
-      </section>
+<div class="lang">
+<button onclick="setLang('tr')">TR</button>
+<button onclick="setLang('en')">EN</button>
+<button onclick="setLang('de')">DE</button>
+</div>
 
-      <section class="card" aria-labelledby="policies-title">
-        <h2 id="policies-title">Politikalar</h2>
-        <ul class="list">
-          <li>Gizlilik Politikası: <a href="#">Görüntüle</a></li>
-          <li>Kullanım Şartları: <a href="#">Görüntüle</a></li>
-        </ul>
-        <p class="meta">Bu sayfa App Store “Support URL” alanında kullanılabilir.</p>
-      </section>
-    </main>
+<header>
+<h1 id="title"></h1>
+<p id="subtitle"></p>
+</header>
 
-    <footer>
-      <p>© <span id="year"></span> Şirket Adı. Tüm hakları saklıdır.</p>
-    </footer>
-  </div>
-  <script>
-    // Yılı otomatik güncelle
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+<main>
+
+<section class="card">
+<h2 id="contactTitle"></h2>
+<p id="contactText"></p>
+
+<ul class="list">
+<li id="email"></li>
+<li id="faq"></li>
+</ul>
+
+<p class="meta" id="response"></p>
+</section>
+
+<section class="card">
+<h2 id="infoTitle"></h2>
+<ul class="list">
+<li id="version"></li>
+<li id="update"></li>
+</ul>
+</section>
+
+<section class="card">
+<h2 id="policyTitle"></h2>
+<ul class="list">
+<li id="privacy"></li>
+<li id="terms"></li>
+</ul>
+
+<p class="meta" id="appstore"></p>
+</section>
+
+</main>
+
+<footer>
+<p id="copyright"></p>
+</footer>
+
+</div>
+
+<script>
+
+const t={
+tr:{
+title:"Destek",
+subtitle:"Yardım mı gerekiyor? Ekibimiz size en kısa sürede yardımcı olmak için burada.",
+contactTitle:"Bize Ulaşın",
+contactText:"Destek ekibimize aşağıdaki kanallardan ulaşabilirsiniz:",
+email:'E-posta: <a href="mailto:support@ornekdomena.com">support@ornekdomena.com</a>',
+faq:'<a href="#">Sıkça Sorulan Sorular</a>',
+response:"Yanıt sürelerimiz genellikle 1-2 iş günüdür.",
+infoTitle:"Hızlı Bilgiler",
+version:"Uygulama sürümü: 1.0.0",
+update:"Son güncelleme: 8 Mart 2026",
+policyTitle:"Politikalar",
+privacy:'<a href="#">Gizlilik Politikası</a>',
+terms:'<a href="#">Kullanım Şartları</a>',
+appstore:"Bu sayfa App Store 'Support URL' alanında kullanılabilir.",
+copyright:"© "+new Date().getFullYear()+" Şirket Adı"
+},
+
+en:{
+title:"Support",
+subtitle:"Need help? Our team is here to assist you.",
+contactTitle:"Contact Us",
+contactText:"You can reach our support team through the following channels:",
+email:'Email: <a href="mailto:support@ornekdomena.com">support@ornekdomena.com</a>',
+faq:'<a href="#">Frequently Asked Questions</a>',
+response:"Response time is usually 1-2 business days.",
+infoTitle:"Quick Info",
+version:"App version: 1.0.0",
+update:"Last update: March 8, 2026",
+policyTitle:"Policies",
+privacy:'<a href="#">Privacy Policy</a>',
+terms:'<a href="#">Terms of Use</a>',
+appstore:"This page can be used as the App Store Support URL.",
+copyright:"© "+new Date().getFullYear()+" Company Name"
+},
+
+de:{
+title:"Support",
+subtitle:"Benötigen Sie Hilfe? Unser Team hilft Ihnen gerne weiter.",
+contactTitle:"Kontakt",
+contactText:"Sie können unser Support-Team über folgende Wege erreichen:",
+email:'E-Mail: <a href="mailto:support@ornekdomena.com">support@ornekdomena.com</a>',
+faq:'<a href="#">Häufig gestellte Fragen</a>',
+response:"Antwortzeit normalerweise 1-2 Werktage.",
+infoTitle:"Schnelle Infos",
+version:"App Version: 1.0.0",
+update:"Letzte Aktualisierung: 8. März 2026",
+policyTitle:"Richtlinien",
+privacy:'<a href="#">Datenschutzrichtlinie</a>',
+terms:'<a href="#">Nutzungsbedingungen</a>',
+appstore:"Diese Seite kann als App Store Support URL verwendet werden.",
+copyright:"© "+new Date().getFullYear()+" Firmenname"
+}
+}
+
+function setLang(lang){
+document.documentElement.lang=lang
+const d=t[lang]
+
+for(let k in d){
+document.getElementById(k).innerHTML=d[k]
+}
+}
+
+setLang("tr")
+
+</script>
+
 </body>
 </html>
