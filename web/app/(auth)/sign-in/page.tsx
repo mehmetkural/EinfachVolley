@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn, signInWithGoogle } from "@/firebase/auth";
+import { signIn, signInWithGoogle, signInAsGuest } from "@/firebase/auth";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
@@ -15,6 +15,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +43,20 @@ export default function SignInPage() {
       setError(err instanceof Error ? err.message : "Google sign in failed");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGuest() {
+    setError("");
+    setGuestLoading(true);
+    try {
+      await signInAsGuest();
+      trackEvent("sign_in_success", { method: "guest" });
+      router.push("/matches");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Guest sign in failed");
+    } finally {
+      setGuestLoading(false);
     }
   }
 
@@ -87,6 +102,22 @@ export default function SignInPage() {
           disabled={loading}
         >
           Continue with Google
+        </Button>
+
+        <div className="my-4 flex items-center gap-2 text-gray-400 text-sm">
+          <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+          veya
+          <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+        </div>
+
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={handleGuest}
+          loading={guestLoading}
+          disabled={loading || guestLoading}
+        >
+          Misafir olarak devam et
         </Button>
 
         <div className="mt-4 text-sm text-center space-y-2 text-gray-600 dark:text-gray-400">

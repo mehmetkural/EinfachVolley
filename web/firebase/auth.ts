@@ -6,6 +6,7 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
+  signInAnonymously,
   onAuthStateChanged,
   User,
 } from "firebase/auth";
@@ -36,6 +37,11 @@ export async function signOutUser() {
 /** Send password reset email */
 export async function resetPassword(email: string) {
   return sendPasswordResetEmail(auth, email);
+}
+
+/** Sign in anonymously (guest) */
+export async function signInAsGuest() {
+  return signInAnonymously(auth);
 }
 
 /** Subscribe to auth state changes */
