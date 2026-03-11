@@ -6,6 +6,9 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  doc,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/client";
 import type { Venue } from "@/models/venue";
@@ -43,4 +46,17 @@ export async function addVenue(
     createdAt: serverTimestamp(),
   });
   return ref.id;
+}
+
+/** Update a venue (admin only) */
+export async function updateVenue(
+  id: string,
+  data: Partial<Omit<Venue, "id" | "createdAt" | "createdBy">>
+): Promise<void> {
+  await updateDoc(doc(db, "venues", id), data);
+}
+
+/** Delete a venue (admin only) */
+export async function deleteVenue(id: string): Promise<void> {
+  await deleteDoc(doc(db, "venues", id));
 }

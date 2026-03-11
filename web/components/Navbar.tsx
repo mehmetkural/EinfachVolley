@@ -23,41 +23,46 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/matches"
-            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            Maçlar
-          </Link>
-          <Link
-            href="/venues"
-            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            Sahalar
-          </Link>
-          <Link
-            href="/support"
-            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            Support
-          </Link>
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/matches"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            >
+              Maçlar
+            </Link>
+            <Link
+              href="/venues"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            >
+              Sahalar
+            </Link>
+            <Link
+              href="/support"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+            >
+              Support
+            </Link>
+
+            {user && (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="secondary" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Link href="/profile">
+                  <Button variant="secondary" size="sm">
+                    Profil
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
 
           {user ? (
-            <>
-              <Link href="/dashboard">
-                <Button variant="secondary" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
-              <Link href="/profile">
-                <Button variant="secondary" size="sm">
-                  Profil
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                Sign Out
-              </Button>
-            </>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              Sign Out
+            </Button>
           ) : (
             <>
               <Link href="/sign-in">

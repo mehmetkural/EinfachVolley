@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocument } from "@/services/firestore";
-import { subscribeToVenues, addVenue } from "@/services/venues";
+import { subscribeToVenues, addVenue, updateVenue, deleteVenue } from "@/services/venues";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -31,6 +31,10 @@ export default function AdminVenuesPage() {
     latitude: "",
     longitude: "",
   });
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "" });
+  const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -107,6 +111,32 @@ export default function AdminVenuesPage() {
       setImportResult(`❌ ${err instanceof Error ? err.message : "Hata oluştu."}`);
     } finally {
       setImporting(false);
+    }
+  }
+
+  async function handleDelete(v: Venue) {
+    if (!confirm(`"${v.name}" silinsin mi?`)) return;
+    try {
+      await deleteVenue(v.id);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Silinemedi.");
+    }
+  }
+
+  async function handleEditSave(id: string) {
+    setEditSaving(true);
+    try {
+      await updateVenue(id, {
+        name: editForm.name,
+        address: editForm.address,
+        latitude: parseFloat(editForm.latitude) || 0,
+        longitude: parseFloat(editForm.longitude) || 0,
+      });
+      setEditingId(null);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Güncellenemedi.");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -234,19 +264,40 @@ Longitude: 10.910000`}
         </Card>
       ) : (
         <div className="space-y-3">
-          {venues.map((v) => (
-            <Card key={v.id}>
-              <div className="font-medium">{v.name}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                📍 {v.address}
-              </div>
-              {(v.latitude !== 0 || v.longitude !== 0) && (
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {v.latitude}, {v.longitude}
+          {venues.map((v) =>
+            editingId === v.id ? (
+              <Card key={v.id}>
+                <div className="space-y-2">
+                  <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Saha Adı" />
+                  <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.address} onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))} placeholder="Adres" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.latitude} onChange={(e) => setEditForm((f) => ({ ...f, latitude: e.target.value }))} placeholder="Enlem" />
+                    <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.longitude} onChange={(e) => setEditForm((f) => ({ ...f, longitude: e.target.value }))} placeholder="Boylam" />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button size="sm" loading={editSaving} onClick={() => handleEditSave(v.id)}>Kaydet</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>İptal</Button>
+                  </div>
                 </div>
-              )}
-            </Card>
-          ))}
+              </Card>
+            ) : (
+              <Card key={v.id}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-medium">{v.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">📍 {v.address}</div>
+                    {(v.latitude !== 0 || v.longitude !== 0) && (
+                      <div className="text-xs text-gray-400 mt-0.5">{v.latitude}, {v.longitude}</div>
+                    )}
+                  </div>
+                  <div className="flex gap-2 ml-3">
+                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude) }); }} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Düzenle</button>
+                    <button onClick={() => handleDelete(v)} className="text-xs text-red-500 hover:underline">Sil</button>
+                  </div>
+                </div>
+              </Card>
+            )
+          )}
         </div>
       )}
     </div>
