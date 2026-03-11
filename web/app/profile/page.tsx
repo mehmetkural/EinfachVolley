@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Loader } from "@/components/Loader";
+import Link from "next/link";
 import type { UserProfile, VolleyPosition } from "@/models/user";
 import { Timestamp } from "firebase/firestore";
 
@@ -222,6 +223,16 @@ export default function ProfilePage() {
           </div>
         </form>
       </Card>
+
+      {/* Support link */}
+      <div className="mt-6 text-center">
+        <Link
+          href="/support"
+          className="text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+        >
+          Yardım & Destek
+        </Link>
+      </div>
     </div>
   );
 }

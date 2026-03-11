@@ -5,10 +5,49 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_ITEMS = [
-  { href: "/matches", label: "Maçlar", icon: "🏐" },
-  { href: "/venues", label: "Sahalar", icon: "📍" },
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/profile", label: "Profil", icon: "👤" },
+  {
+    href: "/matches",
+    label: "Maçlar",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 3c0 0 2 3 2 9s-2 9-2 9" />
+        <path d="M12 3c0 0-2 3-2 9s2 9 2 9" />
+        <path d="M3.5 8.5h17M3.5 15.5h17" />
+      </svg>
+    ),
+  },
+  {
+    href: "/venues",
+    label: "Sahalar",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8.686 2 6 4.686 6 8c0 5.25 6 14 6 14s6-8.75 6-14c0-3.314-2.686-6-6-6z" />
+        <circle cx="12" cy="8" r="2" />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
+        <rect x="3" y="13" width="4" height="8" rx="1" />
+        <rect x="10" y="9" width="4" height="12" rx="1" />
+        <rect x="17" y="4" width="4" height="17" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    href: "/profile",
+    label: "Profil",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
+        <circle cx="12" cy="8" r="4" />
+        <path strokeLinecap="round" d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
+      </svg>
+    ),
+  },
 ];
 
 export function BottomNav() {
@@ -18,7 +57,7 @@ export function BottomNav() {
   if (!user) return null;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 safe-area-pb">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800">
       <div className="flex">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -26,13 +65,13 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${
+              className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${
                 active
                   ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-500 dark:text-gray-400"
+                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               }`}
             >
-              <span className="text-xl leading-none">{item.icon}</span>
+              {item.icon}
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );

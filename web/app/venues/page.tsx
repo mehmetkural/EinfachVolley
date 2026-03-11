@@ -8,8 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getDocument } from "@/services/firestore";
 import { subscribeToActiveMatches } from "@/services/matches";
 import { subscribeToVenues } from "@/services/venues";
-import { Card } from "@/components/Card";
-import { Button } from "@/components/Button";
 import { Loader } from "@/components/Loader";
 import type { VolleyMatch } from "@/models/match";
 import type { Venue } from "@/models/venue";
@@ -43,13 +41,11 @@ export default function VenuesPage() {
   const [fetchError, setFetchError] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [listOpen, setListOpen] = useState(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/sign-in");
-      return;
-    }
+    if (!loading && !user) { router.push("/sign-in"); return; }
     if (!user) return;
 
     getDocument<UserProfile>("users", user.uid).then((p) => {
@@ -57,7 +53,6 @@ export default function VenuesPage() {
     });
 
     const unsubVenues = subscribeToVenues((v, err) => {
-      // Cancel timeout — Firestore responded (success or error)
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (err) setFetchError(err);
       setVenues(v);
@@ -67,9 +62,7 @@ export default function VenuesPage() {
     const unsubMatches = subscribeToActiveMatches((m) => setMatches(m));
 
     timeoutRef.current = setTimeout(() => {
-      setFetchError(
-        "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules bölümünden kuralları publish et."
-      );
+      setFetchError("Firestore bağlantısı kurulamadı.");
       setFetching(false);
     }, 10000);
 
@@ -80,7 +73,6 @@ export default function VenuesPage() {
     };
   }, [user, loading, router]);
 
-  // Merge: for each venue, find its active matches by venueName
   const venueGroups: VenueGroup[] = venues.map((v) => ({
     venueName: v.name,
     venueAddress: v.address,
@@ -89,99 +81,156 @@ export default function VenuesPage() {
     matches: matches.filter((m) => m.venueName === v.name),
   }));
 
+  const totalMatches = venueGroups.reduce((a, v) => a + v.matches.length, 0);
+  const selectedGroup = venueGroups.find((v) => v.venueName === selected) ?? null;
+
   if (loading || fetching) return <Loader className="mt-20" />;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Sahalar</h1>
-        {isAdmin && (
-          <Link href="/admin/venues">
-            <Button size="sm" variant="secondary">+ Saha Ekle</Button>
-          </Link>
+    // Break out of main container padding to fill viewport
+    <div
+      className="-mx-4 -mt-8 -mb-16 md:-mb-0 relative overflow-hidden"
+      style={{ height: "calc(100vh - 64px)" }}
+    >
+      {/* Full-screen map */}
+      <div className="absolute inset-0">
+        {venueGroups.length > 0 ? (
+          <MatchMap
+            venues={venueGroups}
+            selectedVenue={selected}
+            onVenueSelect={setSelected}
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-400 flex-col gap-3">
+            <span className="text-5xl">📍</span>
+            <p>Henüz saha eklenmemiş.</p>
+          </div>
         )}
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {venueGroups.length} saha · {venueGroups.reduce((a, v) => a + v.matches.length, 0)} aktif maç
-        </span>
       </div>
 
+      {/* Floating top bar */}
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex items-start justify-between gap-3 pointer-events-none">
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
+          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">Sahalar</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-0.5">
+            {venueGroups.length} saha · {totalMatches} maç
+          </span>
+        </div>
+        <div className="flex gap-2 pointer-events-auto">
+          {isAdmin && (
+            <Link
+              href="/admin/venues"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-xl shadow-lg transition-colors"
+            >
+              + Saha Ekle
+            </Link>
+          )}
+          <button
+            onClick={() => setListOpen((o) => !o)}
+            className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm font-medium px-3 py-2 rounded-xl shadow-lg transition-colors"
+          >
+            {listOpen ? "✕ Listeyi Kapat" : "☰ Sahalar"}
+          </button>
+        </div>
+      </div>
+
+      {/* Error banner */}
       {fetchError && (
-        <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+        <div className="absolute top-20 left-4 right-4 z-[1000] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2 text-sm text-red-700 dark:text-red-400">
           ⚠️ {fetchError}
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Venue list */}
-        <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-1">
-          {venueGroups.length === 0 ? (
-            <Card className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <div className="text-4xl mb-3">📍</div>
-              <p>Henüz saha eklenmemiş.</p>
-            </Card>
-          ) : (
-            venueGroups.map((venue) => (
-              <Card
-                key={venue.venueName}
-                className={`cursor-pointer transition-all ${
-                  selected === venue.venueName
-                    ? "ring-2 ring-blue-500"
-                    : "hover:shadow-md"
-                }`}
-                onClick={() => setSelected(venue.venueName)}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold">{venue.venueName}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      📍 {venue.venueAddress}
-                    </p>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      venue.matches.length > 0
-                        ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                    }`}>
-                    {venue.matches.length > 0 ? `${venue.matches.length} maç` : "Maç yok"}
-                  </span>
+      {/* Venue list panel */}
+      {listOpen && venueGroups.length > 0 && (
+        <div className="absolute top-20 left-4 bottom-4 z-[1000] w-72 flex flex-col gap-2 overflow-y-auto">
+          {venueGroups.map((venue) => (
+            <button
+              key={venue.venueName}
+              onClick={() => setSelected(venue.venueName)}
+              className={`w-full text-left bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl shadow-md p-3 transition-all border-2 ${
+                selected === venue.venueName
+                  ? "border-blue-500"
+                  : "border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                    {venue.venueName}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                    📍 {venue.venueAddress}
+                  </p>
                 </div>
+                <span
+                  className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
+                    venue.matches.length > 0
+                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  {venue.matches.length > 0 ? `${venue.matches.length} maç` : "Maç yok"}
+                </span>
+              </div>
 
-                <div className="space-y-1">
-                  {venue.matches.slice(0, 3).map((m) => (
-                    <Link
-                      key={m.id}
-                      href="/matches"
-                      className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span>📅 {formatDate(m.date)}</span>
-                      <span>
-                        {m.currentPlayerCount}/{m.maxPlayers} oyuncu
-                      </span>
-                    </Link>
-                  ))}
-                  {venue.matches.length > 3 && (
-                    <p className="text-xs text-gray-400">
-                      +{venue.matches.length - 3} daha...
-                    </p>
-                  )}
+              {venue.matches.slice(0, 2).map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
+                >
+                  <span>📅 {formatDate(m.date)}</span>
+                  <span>{m.currentPlayerCount}/{m.maxPlayers} oyuncu</span>
                 </div>
-              </Card>
-            ))
-          )}
+              ))}
+            </button>
+          ))}
         </div>
+      )}
 
-        {/* Map */}
-        <div className="h-[70vh] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-          {venueGroups.length > 0 ? (
-            <MatchMap venues={venueGroups} selectedVenue={selected} />
-          ) : (
-            <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-400">
-              Harita için saha gerekli
+      {/* Selected venue bottom panel */}
+      {selectedGroup && (
+        <div className="absolute bottom-4 right-4 z-[1000] w-72 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-xl p-4">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-gray-100">{selectedGroup.venueName}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">📍 {selectedGroup.venueAddress}</p>
             </div>
+            <button
+              onClick={() => setSelected(null)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none ml-2"
+            >
+              ✕
+            </button>
+          </div>
+
+          {selectedGroup.matches.length > 0 ? (
+            <div className="space-y-2 mt-3">
+              {selectedGroup.matches.map((m) => (
+                <Link
+                  key={m.id}
+                  href={`/matches/${m.id}`}
+                  className="flex items-center justify-between text-xs bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg px-3 py-2 transition-colors"
+                >
+                  <span className="text-gray-700 dark:text-gray-300">📅 {formatDate(m.date)}</span>
+                  <span className={`font-medium ${m.currentPlayerCount >= m.maxPlayers ? "text-red-500" : "text-blue-600 dark:text-blue-400"}`}>
+                    {m.currentPlayerCount}/{m.maxPlayers}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 mt-2">Bu sahada aktif maç bulunmuyor.</p>
           )}
+
+          <Link
+            href="/matches/new"
+            className="block mt-3 text-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            + Bu sahada maç oluştur
+          </Link>
         </div>
-      </div>
+      )}
     </div>
   );
 }
