@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { signOutUser } from "@/firebase/auth";
 
@@ -16,6 +18,9 @@ export function Navbar() {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   async function handleSignOut() {
     await signOutUser();
@@ -54,8 +59,26 @@ export function Navbar() {
             })}
         </div>
 
-        {/* Auth actions */}
+        {/* Theme toggle + Auth actions */}
         <div className="flex items-center gap-2">
+          {mounted && (
+            <button
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Tema değiştir"
+            >
+              {resolvedTheme === "dark" ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                  <circle cx="12" cy="12" r="4" />
+                  <path strokeLinecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+            </button>
+          )}
           {user ? (
             <button
               onClick={handleSignOut}
