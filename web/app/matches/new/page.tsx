@@ -14,6 +14,15 @@ import { trackEvent } from "@/lib/analytics";
 import type { Venue } from "@/models/venue";
 
 const NET_HEIGHTS = ["2.24m (Kadın)", "2.35m (Mixed)", "2.43m (Erkek)"];
+const DURATIONS = [
+  { value: "1", label: "1 saat" },
+  { value: "1.5", label: "1,5 saat" },
+  { value: "2", label: "2 saat" },
+  { value: "2.5", label: "2,5 saat" },
+  { value: "3", label: "3 saat" },
+  { value: "3.5", label: "3,5 saat" },
+  { value: "4", label: "4 saat" },
+];
 const GENDER_TYPES = [
   { value: "mixed", label: "Mixed" },
   { value: "male", label: "Erkek" },
@@ -162,17 +171,27 @@ export default function NewMatchPage() {
                 onChange={(e) => set("time", e.target.value)}
                 required
               />
-              <Input
-                id="duration"
-                label="Süre (saat)"
-                type="number"
-                min="0.5"
-                max="8"
-                step="0.5"
-                value={form.duration}
-                onChange={(e) => set("duration", e.target.value)}
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Süre
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {DURATIONS.map((d) => (
+                    <button
+                      key={d.value}
+                      type="button"
+                      onClick={() => set("duration", d.value)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                        form.duration === d.value
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </Card>
 

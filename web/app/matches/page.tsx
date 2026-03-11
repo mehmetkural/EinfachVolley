@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { subscribeToActiveMatches, joinMatch } from "@/services/matches";
+import { subscribeToActiveMatches, subscribeToPastMatches, joinMatch } from "@/services/matches";
 import { MatchCard } from "@/components/MatchCard";
 import { Loader } from "@/components/Loader";
 import { Button } from "@/components/Button";
@@ -14,8 +14,10 @@ export default function MatchesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
+  const [pastMatches, setPastMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [pastOpen, setPastOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -32,6 +34,8 @@ export default function MatchesPage() {
       setFetching(false);
     });
 
+    const unsubPast = subscribeToPastMatches((data) => setPastMatches(data));
+
     timeoutRef.current = setTimeout(() => {
       setFetchError(
         "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules → allow read: if request.auth != null"
@@ -41,6 +45,7 @@ export default function MatchesPage() {
 
     return () => {
       unsubscribe();
+      unsubPast();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [user, loading, router]);
@@ -88,6 +93,30 @@ export default function MatchesPage() {
               isJoined={match.participants.includes(user?.uid ?? "")}
             />
           ))}
+        </div>
+      )}
+
+      {/* Past matches collapsible */}
+      {pastMatches.length > 0 && (
+        <div className="mt-8">
+          <button
+            onClick={() => setPastOpen((p) => !p)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <span>Geçmiş Maçlar ({pastMatches.length})</span>
+            <span>{pastOpen ? "▲" : "▼"}</span>
+          </button>
+          {pastOpen && (
+            <div className="space-y-4 mt-3">
+              {pastMatches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  isJoined={match.participants.includes(user?.uid ?? "")}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

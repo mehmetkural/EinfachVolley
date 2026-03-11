@@ -74,6 +74,29 @@ export function subscribeToMyMatches(
   );
 }
 
+/** Subscribe to past/completed matches (real-time) */
+export function subscribeToPastMatches(
+  callback: (matches: VolleyMatch[]) => void
+): () => void {
+  const q = query(
+    collection(db, "matches"),
+    where("status", "in", ["completed", "cancelled"])
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const matches = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as VolleyMatch)
+        .sort((a, b) => b.date.toDate().getTime() - a.date.toDate().getTime());
+      callback(matches);
+    },
+    (err) => {
+      console.error("[Firestore] subscribeToPastMatches:", err);
+      callback([]);
+    }
+  );
+}
+
 /** Join a match as a registered user */
 export async function joinMatch(matchId: string, uid: string): Promise<void> {
   const ref = doc(db, "matches", matchId);
