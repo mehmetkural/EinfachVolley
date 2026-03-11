@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { getDocument } from "@/services/firestore";
 import { subscribeToActiveMatches } from "@/services/matches";
 import { subscribeToVenues } from "@/services/venues";
 import { Card } from "@/components/Card";
+import { Button } from "@/components/Button";
 import { Loader } from "@/components/Loader";
 import type { VolleyMatch } from "@/models/match";
 import type { Venue } from "@/models/venue";
+import type { UserProfile } from "@/models/user";
 
 const MatchMap = dynamic(() => import("@/components/MatchMap"), { ssr: false });
 
@@ -39,6 +42,7 @@ export default function VenuesPage() {
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -47,6 +51,10 @@ export default function VenuesPage() {
       return;
     }
     if (!user) return;
+
+    getDocument<UserProfile>("users", user.uid).then((p) => {
+      if (p?.isAdmin) setIsAdmin(true);
+    });
 
     const unsubVenues = subscribeToVenues((v, err) => {
       // Cancel timeout — Firestore responded (success or error)
@@ -87,6 +95,11 @@ export default function VenuesPage() {
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Sahalar</h1>
+        {isAdmin && (
+          <Link href="/admin/venues">
+            <Button size="sm" variant="secondary">+ Saha Ekle</Button>
+          </Link>
+        )}
         <span className="text-sm text-gray-500 dark:text-gray-400">
           {venueGroups.length} saha · {venueGroups.reduce((a, v) => a + v.matches.length, 0)} aktif maç
         </span>
