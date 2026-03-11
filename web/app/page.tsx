@@ -8,12 +8,11 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="text-center py-20">
         <h1 className="text-5xl font-bold tracking-tight mb-4">
-          Volleyball Training,{" "}
-          <span className="text-blue-600 dark:text-blue-400">Simplified</span>
+          Volleyball Games in{" "}
+          <span className="text-blue-600 dark:text-blue-400">Bamberg</span>
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-          EinfachVolley helps you track your progress, analyze your game, and become a
-          better volleyball player.
+          Find the closest volleyball game to you, join in, and have fun.
         </p>
         <div className="flex items-center justify-center gap-4">
           <Link href="/sign-up">
@@ -31,19 +30,18 @@ export default function LandingPage() {
       <section className="py-16 grid md:grid-cols-3 gap-6">
         {[
           {
-            title: "Track Progress",
-            description:
-              "Monitor your training sessions and track improvement over time.",
-            icon: "📊",
+            title: "Find a Game",
+            description: "Browse upcoming matches near you and see who's playing.",
+            icon: "📍",
           },
           {
-            title: "Analyze Game",
-            description: "Deep dive into your stats and understand your game better.",
+            title: "Join & Play",
+            description: "Reserve your spot in seconds and hit the court.",
             icon: "🏐",
           },
           {
-            title: "Team Play",
-            description: "Coordinate with your team and share insights.",
+            title: "Meet Players",
+            description: "Connect with the local volleyball community in Bamberg.",
             icon: "👥",
           },
         ].map((feature) => (
