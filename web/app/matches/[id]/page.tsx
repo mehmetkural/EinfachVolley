@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +15,9 @@ import {
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Loader } from "@/components/Loader";
+import { getDocument } from "@/services/firestore";
 import type { VolleyMatch } from "@/models/match";
+import type { UserProfile } from "@/models/user";
 
 function formatDate(ts: { toDate: () => Date }): string {
   return ts.toDate().toLocaleDateString("tr-TR", {
@@ -43,6 +45,8 @@ export default function MatchDetailPage() {
   const [guestName, setGuestName] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
+  const fetchedUids = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,6 +57,23 @@ export default function MatchDetailPage() {
     const unsub = subscribeToMatch(id, (m) => {
       setMatch(m);
       setFetching(false);
+      if (m) {
+        const missing = m.participants.filter((uid) => !fetchedUids.current.has(uid));
+        if (missing.length > 0) {
+          missing.forEach((uid) => fetchedUids.current.add(uid));
+          Promise.all(missing.map((uid) => getDocument<UserProfile>("users", uid))).then(
+            (profiles) => {
+              setParticipantNames((prev) => {
+                const next = { ...prev };
+                profiles.forEach((p, i) => {
+                  next[missing[i]] = p?.displayName ?? p?.email ?? missing[i].slice(0, 8);
+                });
+                return next;
+              });
+            }
+          );
+        }
+      }
     });
     return unsub;
   }, [id, user, loading, router]);
@@ -231,7 +252,10 @@ export default function MatchDetailPage() {
               <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center justify-center text-xs font-bold">
                 {uid === match.organizerId ? "O" : "•"}
               </span>
-              <span>{uid === user?.uid ? "Sen" : uid === match.organizerId ? match.organizerName : `Oyuncu`}</span>
+              <span>
+                {uid === user?.uid ? "Sen" : participantNames[uid] ?? "..."}
+                {uid === match.organizerId && <span className="ml-1 text-xs text-gray-400">(organizatör)</span>}
+              </span>
             </div>
           ))}
           {Object.values(match.guests ?? {}).flat().map((g) => (
