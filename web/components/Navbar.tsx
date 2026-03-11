@@ -24,6 +24,12 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           <Link
+            href="/matches"
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+          >
+            Maçlar
+          </Link>
+          <Link
             href="/support"
             className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >

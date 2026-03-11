@@ -2,19 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read/write their own profile
+    // Users: any authenticated user can read profiles; only owner can write
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Support tickets: authenticated users can create; only owner can read
-    match /supportTickets/{ticketId} {
+    // Matches: any authenticated user can read and create
+    // Only the organizer can update or delete
+    match /matches/{matchId} {
+      allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow read, update, delete: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+      allow update, delete: if request.auth != null
+        && resource.data.organizerId == request.auth.uid;
     }
 
-    // Deny all other access by default
+    // Deny everything else
     match /{document=**} {
       allow read, write: if false;
     }

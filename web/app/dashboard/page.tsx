@@ -1,96 +1,99 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { subscribeToMyMatches } from "@/services/matches";
+import { getDocument } from "@/services/firestore";
+import { MatchCard } from "@/components/MatchCard";
 import { Card } from "@/components/Card";
 import { Loader } from "@/components/Loader";
+import { Button } from "@/components/Button";
+import type { VolleyMatch } from "@/models/match";
+import type { UserProfile } from "@/models/user";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [matches, setMatches] = useState<VolleyMatch[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/sign-in");
+      return;
     }
+    if (!user) return;
+
+    // Load user profile
+    getDocument<UserProfile>("users", user.uid).then((p) => setProfile(p));
+
+    // Subscribe to my matches
+    const unsubscribe = subscribeToMyMatches(user.uid, (data) => {
+      setMatches(data);
+      setFetching(false);
+    });
+
+    return unsubscribe;
   }, [user, loading, router]);
 
-  if (loading) {
-    return <Loader className="mt-20" />;
-  }
-
+  if (loading || fetching) return <Loader className="mt-20" />;
   if (!user) return null;
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Hoş geldin, {profile?.displayName ?? user.email}
+          </p>
+        </div>
+        <Link href="/matches">
+          <Button>Tüm Maçları Gör</Button>
+        </Link>
+      </div>
 
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Training Sessions", value: "0" },
-          { label: "Total Sets", value: "0" },
-          { label: "Win Rate", value: "—" },
+          { label: "Oynanan Maç", value: profile?.matchesPlayed ?? 0 },
+          { label: "Rating", value: profile?.rating?.toFixed(1) ?? "—" },
+          { label: "Seviye", value: profile?.skillLevel ?? "—" },
+          { label: "Pozisyon", value: profile?.position ?? "—" },
         ].map((stat) => (
           <Card key={stat.label} className="text-center">
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
               {stat.value}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {stat.label}
+            </div>
           </Card>
         ))}
       </div>
 
-      <Card>
-        <h2 className="text-lg font-semibold mb-4">Profile</h2>
-        <ProfileUpdateForm user={user} />
-      </Card>
-    </div>
-  );
-}
-
-// Server Action example via client component form
-import { useState } from "react";
-import { updateDocument } from "@/services/firestore";
-import { Button } from "@/components/Button";
-import { Input } from "@/components/Input";
-import { User } from "firebase/auth";
-
-function ProfileUpdateForm({ user }: { user: User }) {
-  const [displayName, setDisplayName] = useState(user.displayName ?? "");
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await updateDocument("users", user.uid, { displayName });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSave} className="space-y-4 max-w-sm">
-      <Input
-        id="displayName"
-        label="Display Name"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
-        placeholder="Your name"
-      />
-      <div className="flex items-center gap-3">
-        <Button type="submit" size="sm" loading={loading}>
-          Save Changes
-        </Button>
-        {saved && (
-          <span className="text-sm text-green-600 dark:text-green-400">Saved!</span>
+      {/* My active matches */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Katıldığım Maçlar</h2>
+        {matches.length === 0 ? (
+          <Card className="text-center py-10 text-gray-500 dark:text-gray-400">
+            <div className="text-4xl mb-3">🏐</div>
+            <p>Henüz aktif bir maçın yok.</p>
+            <Link href="/matches" className="mt-3 inline-block">
+              <Button variant="secondary" size="sm">Maç Bul</Button>
+            </Link>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {matches.map((match) => (
+              <MatchCard key={match.id} match={match} isJoined />
+            ))}
+          </div>
         )}
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">Email: {user.email}</p>
-    </form>
+    </div>
   );
 }
