@@ -10,6 +10,7 @@ import { signOutUser } from "@/firebase/auth";
 const NAV_LINKS = [
   { href: "/matches", label: "Maçlar" },
   { href: "/venues", label: "Sahalar" },
+  { href: "/store", label: "Mağaza" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/profile", label: "Profil" },
 ];
