@@ -1,4 +1,4 @@
-// Firestore CRUD abstraction layer
+// Firestore CRUD abstraction layer — client-side only
 import {
   collection,
   doc,

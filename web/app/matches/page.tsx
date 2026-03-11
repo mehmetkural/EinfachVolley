@@ -30,7 +30,18 @@ export default function MatchesPage() {
       setFetching(false);
     });
 
-    return unsubscribe;
+    // Timeout: eğer 10 saniyede Firestore cevap vermezse hata göster
+    const timeout = setTimeout(() => {
+      setFetchError(
+        "Firestore bağlantısı kurulamadı. Firebase Security Rules'u kontrol et: Firebase Console → Firestore → Rules → allow read: if request.auth != null"
+      );
+      setFetching(false);
+    }, 10000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [user, loading, router]);
 
   async function handleJoin(matchId: string) {
