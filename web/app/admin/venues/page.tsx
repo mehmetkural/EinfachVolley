@@ -21,6 +21,9 @@ export default function AdminVenuesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [importText, setImportText] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -54,6 +57,57 @@ export default function AdminVenuesPage() {
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  // Parse the txt format: Name/Address/Latitude/Longitude blocks separated by ---
+  function parseVenueText(text: string) {
+    return text
+      .split("---")
+      .map((block) => {
+        const lines: Record<string, string> = {};
+        block.trim().split("\n").forEach((line) => {
+          const idx = line.indexOf(":");
+          if (idx === -1) return;
+          const key = line.slice(0, idx).trim().toLowerCase();
+          const val = line.slice(idx + 1).trim();
+          lines[key] = val;
+        });
+        if (!lines["name"] || !lines["address"]) return null;
+        return {
+          name: lines["name"],
+          address: lines["address"],
+          latitude: parseFloat(lines["latitude"]) || 0,
+          longitude: parseFloat(lines["longitude"]) || 0,
+        };
+      })
+      .filter(Boolean) as { name: string; address: string; latitude: number; longitude: number }[];
+  }
+
+  async function handleImport() {
+    if (!user || !importText.trim()) return;
+    setImporting(true);
+    setImportResult("");
+    const parsed = parseVenueText(importText);
+    if (parsed.length === 0) {
+      setImportResult("❌ Geçerli saha bulunamadı. Formatı kontrol et.");
+      setImporting(false);
+      return;
+    }
+    // Skip venues that already exist (by name)
+    const existingNames = new Set(venues.map((v) => v.name.toLowerCase()));
+    const toAdd = parsed.filter((v) => !existingNames.has(v.name.toLowerCase()));
+    try {
+      await Promise.all(toAdd.map((v) => addVenue({ ...v, createdBy: user.uid })));
+      const skipped = parsed.length - toAdd.length;
+      setImportResult(
+        `✓ ${toAdd.length} saha eklendi${skipped > 0 ? `, ${skipped} zaten vardı` : ""}.`
+      );
+      setImportText("");
+    } catch (err: unknown) {
+      setImportResult(`❌ ${err instanceof Error ? err.message : "Hata oluştu."}`);
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -91,6 +145,40 @@ export default function AdminVenuesPage() {
         </span>
         <h1 className="text-3xl font-bold">Saha Yönetimi</h1>
       </div>
+
+      {/* Bulk import */}
+      <Card className="mb-6">
+        <h2 className="font-semibold mb-1">Toplu Import</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Aşağıdaki formatta sahalar yapıştır, otomatik parse eder. Zaten var olanları atlar.
+        </p>
+        <pre className="text-xs bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-3 text-gray-500 dark:text-gray-400 overflow-x-auto">
+{`Name: Erba Park Beach
+Address: Galgenfuhr 30, 96050 Bamberg
+Latitude: 49.892300
+Longitude: 10.902600
+---
+Name: Sportzentrum XYZ
+Address: Musterstraße 1, 12345 Stadt
+Latitude: 49.900000
+Longitude: 10.910000`}
+        </pre>
+        <textarea
+          value={importText}
+          onChange={(e) => setImportText(e.target.value)}
+          rows={6}
+          placeholder="Saha listesini buraya yapıştır..."
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3"
+        />
+        {importResult && (
+          <p className={`text-sm mb-3 ${importResult.startsWith("✓") ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+            {importResult}
+          </p>
+        )}
+        <Button size="sm" loading={importing} onClick={handleImport} disabled={!importText.trim()}>
+          İçe Aktar
+        </Button>
+      </Card>
 
       {/* Add venue form */}
       <Card className="mb-6">
