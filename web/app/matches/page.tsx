@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToActiveMatches, subscribeToPastMatches, joinMatch } from "@/services/matches";
 import { MatchCard } from "@/components/MatchCard";
 import { Loader } from "@/components/Loader";
-import { Button } from "@/components/Button";
 import type { VolleyMatch } from "@/models/match";
 
 export default function MatchesPage() {
@@ -60,15 +59,16 @@ export default function MatchesPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Aktif Maçlar</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {matches.length} maç
-          </span>
-          <Link href="/matches/new">
-            <Button size="sm">Maç Oluştur</Button>
-          </Link>
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Aktif Maçlar</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{matches.length} maç mevcut</p>
         </div>
+        <Link
+          href="/matches/new"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+        >
+          + Maç Oluştur
+        </Link>
       </div>
 
       {fetchError && (

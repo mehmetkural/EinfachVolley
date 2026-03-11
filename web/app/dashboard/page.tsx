@@ -7,11 +7,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToMyMatches } from "@/services/matches";
 import { getDocument } from "@/services/firestore";
 import { MatchCard } from "@/components/MatchCard";
-import { Card } from "@/components/Card";
 import { Loader } from "@/components/Loader";
-import { Button } from "@/components/Button";
 import type { VolleyMatch } from "@/models/match";
 import type { UserProfile } from "@/models/user";
+
+const SKILL_LABELS: Record<number, string> = { 1: "Başlangıç", 2: "Amatör", 3: "Orta", 4: "İleri", 5: "Uzman" };
+
+const POSITION_ICONS: Record<string, string> = {
+  Universal: "🔄",
+  Setter: "🎯",
+  Libero: "🛡️",
+  "Outside Hitter": "⚡",
+  "Middle Blocker": "🧱",
+  Opposite: "🏹",
+};
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -21,16 +30,11 @@ export default function DashboardPage() {
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/sign-in");
-      return;
-    }
+    if (!loading && !user) { router.push("/sign-in"); return; }
     if (!user) return;
 
-    // Load user profile
     getDocument<UserProfile>("users", user.uid).then((p) => setProfile(p));
 
-    // Subscribe to my matches
     const unsubscribe = subscribeToMyMatches(user.uid, (data) => {
       setMatches(data);
       setFetching(false);
@@ -42,52 +46,118 @@ export default function DashboardPage() {
   if (loading || fetching) return <Loader className="mt-20" />;
   if (!user) return null;
 
+  const firstName = profile?.displayName?.split(" ")[0] ?? user.email?.split("@")[0] ?? "Oyuncu";
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Hoş geldin, {profile?.displayName ?? user.email}
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Hoş geldin 👋</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{firstName}</h1>
         </div>
-        <Link href="/matches">
-          <Button>Tüm Maçları Gör</Button>
+        <Link
+          href="/matches/new"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+        >
+          + Maç Oluştur
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Oynanan Maç", value: profile?.matchesPlayed ?? 0 },
-          { label: "Rating", value: profile?.rating?.toFixed(1) ?? "—" },
-          { label: "Seviye", value: profile?.skillLevel ?? "—" },
-          { label: "Pozisyon", value: profile?.position ?? "—" },
+          {
+            label: "Oynanan Maç",
+            value: profile?.matchesPlayed ?? 0,
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3c0 0 2 3 2 9s-2 9-2 9" /><path d="M12 3c0 0-2 3-2 9s2 9 2 9" />
+                <path d="M3.5 8.5h17M3.5 15.5h17" />
+              </svg>
+            ),
+            color: "text-blue-600 dark:text-blue-400",
+            bg: "bg-blue-50 dark:bg-blue-900/20",
+          },
+          {
+            label: "Rating",
+            value: profile?.rating?.toFixed(1) ?? "—",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            ),
+            color: "text-amber-600 dark:text-amber-400",
+            bg: "bg-amber-50 dark:bg-amber-900/20",
+          },
+          {
+            label: "Seviye",
+            value: profile?.skillLevel ? SKILL_LABELS[profile.skillLevel] ?? profile.skillLevel : "—",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+                <rect x="3" y="13" width="4" height="8" rx="1" /><rect x="10" y="9" width="4" height="12" rx="1" /><rect x="17" y="4" width="4" height="17" rx="1" />
+              </svg>
+            ),
+            color: "text-emerald-600 dark:text-emerald-400",
+            bg: "bg-emerald-50 dark:bg-emerald-900/20",
+          },
+          {
+            label: "Pozisyon",
+            value: profile?.position
+              ? `${POSITION_ICONS[profile.position] ?? ""} ${profile.position}`
+              : "—",
+            icon: (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+                <circle cx="12" cy="8" r="4" /><path strokeLinecap="round" d="M4 20c0-4 3.582-7 8-7s8 3 8 7" />
+              </svg>
+            ),
+            color: "text-purple-600 dark:text-purple-400",
+            bg: "bg-purple-50 dark:bg-purple-900/20",
+          },
         ].map((stat) => (
-          <Card key={stat.label} className="text-center">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-              {stat.value}
+          <div
+            key={stat.label}
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4"
+          >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${stat.bg} ${stat.color}`}>
+              {stat.icon}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              {stat.label}
-            </div>
-          </Card>
+            <div className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{stat.value}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{stat.label}</div>
+          </div>
         ))}
       </div>
 
-      {/* My active matches */}
+      {/* My matches */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Katıldığım Maçlar</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Katıldığım Maçlar</h2>
+          <Link href="/matches" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
+            Tümünü gör →
+          </Link>
+        </div>
+
         {matches.length === 0 ? (
-          <Card className="text-center py-10 text-gray-500 dark:text-gray-400">
-            <div className="text-4xl mb-3">🏐</div>
-            <p>Henüz aktif bir maçın yok.</p>
-            <Link href="/matches" className="mt-3 inline-block">
-              <Button variant="secondary" size="sm">Maç Bul</Button>
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-10 text-center">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8 text-gray-400">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3c0 0 2 3 2 9s-2 9-2 9" /><path d="M12 3c0 0-2 3-2 9s2 9 2 9" />
+                <path d="M3.5 8.5h17M3.5 15.5h17" />
+              </svg>
+            </div>
+            <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">Henüz maçın yok</p>
+            <p className="text-sm text-gray-400 mb-4">Aktif bir maça katıl veya kendin oluştur.</p>
+            <Link
+              href="/matches"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors"
+            >
+              Maç Bul
             </Link>
-          </Card>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {matches.map((match) => (
               <MatchCard key={match.id} match={match} isJoined />
             ))}
