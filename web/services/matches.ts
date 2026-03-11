@@ -75,26 +75,59 @@ export function subscribeToMyMatches(
 }
 
 /** Subscribe to past/completed matches (real-time) */
+/** Subscribe to past matches:
+ *  - status == completed | cancelled
+ *  - OR status == active but date has already passed (expired)
+ *  Two parallel listeners merged client-side.
+ */
 export function subscribeToPastMatches(
   callback: (matches: VolleyMatch[]) => void
 ): () => void {
-  const q = query(
+  let finishedMatches: VolleyMatch[] = [];
+  let expiredActive: VolleyMatch[] = [];
+
+  function merge() {
+    const combined = [...finishedMatches, ...expiredActive].sort(
+      (a, b) => b.date.toDate().getTime() - a.date.toDate().getTime()
+    );
+    callback(combined);
+  }
+
+  // 1) completed / cancelled
+  const qFinished = query(
     collection(db, "matches"),
     where("status", "in", ["completed", "cancelled"])
   );
-  return onSnapshot(
-    q,
+  const unsubFinished = onSnapshot(
+    qFinished,
     (snap) => {
-      const matches = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() }) as VolleyMatch)
-        .sort((a, b) => b.date.toDate().getTime() - a.date.toDate().getTime());
-      callback(matches);
+      finishedMatches = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VolleyMatch);
+      merge();
     },
-    (err) => {
-      console.error("[Firestore] subscribeToPastMatches:", err);
-      callback([]);
-    }
+    (err) => { console.error("[Firestore] past/finished:", err); }
   );
+
+  // 2) active but date already passed
+  const qActive = query(
+    collection(db, "matches"),
+    where("status", "==", "active")
+  );
+  const unsubActive = onSnapshot(
+    qActive,
+    (snap) => {
+      const now = new Date();
+      expiredActive = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as VolleyMatch)
+        .filter((m) => m.date.toDate() < now);
+      merge();
+    },
+    (err) => { console.error("[Firestore] past/expired-active:", err); }
+  );
+
+  return () => {
+    unsubFinished();
+    unsubActive();
+  };
 }
 
 /** Join a match as a registered user */
