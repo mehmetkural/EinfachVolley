@@ -8,7 +8,7 @@ import type { NextRequest } from "next/server";
 // client-side in the Dashboard component via AuthContext.
 // For production, use Firebase Admin SDK with custom tokens and httpOnly cookies.
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect /dashboard routes — redirect to /sign-in if no session cookie

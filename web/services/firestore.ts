@@ -32,14 +32,14 @@ export async function setDocument(
   await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
-/** Update specific fields in a document */
+/** Update specific fields in a document (creates if doesn't exist) */
 export async function updateDocument(
   collectionName: string,
   id: string,
   data: Record<string, unknown>
 ): Promise<void> {
   const ref = doc(db, collectionName, id);
-  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+  await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 /** Delete a document */
