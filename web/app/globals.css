@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Dark mode support via class strategy */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply antialiased;
+  }
+}
