@@ -6,11 +6,12 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToActiveMatches } from "@/services/matches";
+import { subscribeToVenues } from "@/services/venues";
 import { Card } from "@/components/Card";
 import { Loader } from "@/components/Loader";
 import type { VolleyMatch } from "@/models/match";
+import type { Venue } from "@/models/venue";
 
-// Leaflet must be dynamically imported (no SSR) — it uses window
 const MatchMap = dynamic(() => import("@/components/MatchMap"), { ssr: false });
 
 interface VenueGroup {
@@ -19,23 +20,6 @@ interface VenueGroup {
   latitude: number;
   longitude: number;
   matches: VolleyMatch[];
-}
-
-function groupByVenue(matches: VolleyMatch[]): VenueGroup[] {
-  const map = new Map<string, VenueGroup>();
-  for (const m of matches) {
-    if (!map.has(m.venueName)) {
-      map.set(m.venueName, {
-        venueName: m.venueName,
-        venueAddress: m.venueAddress,
-        latitude: m.latitude,
-        longitude: m.longitude,
-        matches: [],
-      });
-    }
-    map.get(m.venueName)!.matches.push(m);
-  }
-  return Array.from(map.values());
 }
 
 function formatDate(ts: { toDate: () => Date }): string {
@@ -50,7 +34,8 @@ function formatDate(ts: { toDate: () => Date }): string {
 export default function VenuesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [venues, setVenues] = useState<VenueGroup[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -61,12 +46,29 @@ export default function VenuesPage() {
     }
     if (!user) return;
 
-    const unsub = subscribeToActiveMatches((matches) => {
-      setVenues(groupByVenue(matches));
+    // Load all venues from venues collection
+    const unsubVenues = subscribeToVenues((v) => {
+      setVenues(v);
       setFetching(false);
     });
-    return unsub;
+
+    // Load active matches separately to show match counts
+    const unsubMatches = subscribeToActiveMatches((m) => setMatches(m));
+
+    return () => {
+      unsubVenues();
+      unsubMatches();
+    };
   }, [user, loading, router]);
+
+  // Merge: for each venue, find its active matches by venueName
+  const venueGroups: VenueGroup[] = venues.map((v) => ({
+    venueName: v.name,
+    venueAddress: v.address,
+    latitude: v.latitude,
+    longitude: v.longitude,
+    matches: matches.filter((m) => m.venueName === v.name),
+  }));
 
   if (loading || fetching) return <Loader className="mt-20" />;
 
@@ -75,20 +77,20 @@ export default function VenuesPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Sahalar</h1>
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {venues.length} saha · {venues.reduce((a, v) => a + v.matches.length, 0)} maç
+          {venueGroups.length} saha · {venueGroups.reduce((a, v) => a + v.matches.length, 0)} aktif maç
         </span>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Venue list */}
         <div className="space-y-4 overflow-y-auto max-h-[70vh] pr-1">
-          {venues.length === 0 ? (
+          {venueGroups.length === 0 ? (
             <Card className="text-center py-12 text-gray-500 dark:text-gray-400">
               <div className="text-4xl mb-3">📍</div>
-              <p>Aktif maç olan saha yok.</p>
+              <p>Henüz saha eklenmemiş.</p>
             </Card>
           ) : (
-            venues.map((venue) => (
+            venueGroups.map((venue) => (
               <Card
                 key={venue.venueName}
                 className={`cursor-pointer transition-all ${
@@ -105,8 +107,12 @@ export default function VenuesPage() {
                       📍 {venue.venueAddress}
                     </p>
                   </div>
-                  <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full font-medium">
-                    {venue.matches.length} maç
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      venue.matches.length > 0
+                        ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                    }`}>
+                    {venue.matches.length > 0 ? `${venue.matches.length} maç` : "Maç yok"}
                   </span>
                 </div>
 
@@ -137,11 +143,11 @@ export default function VenuesPage() {
 
         {/* Map */}
         <div className="h-[70vh] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-          {venues.length > 0 ? (
-            <MatchMap venues={venues} selectedVenue={selected} />
+          {venueGroups.length > 0 ? (
+            <MatchMap venues={venueGroups} selectedVenue={selected} />
           ) : (
             <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-400">
-              Harita için aktif maç gerekli
+              Harita için saha gerekli
             </div>
           )}
         </div>
