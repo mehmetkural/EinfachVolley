@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Card } from "@/components/Card";
+import { AdBanner } from "@/components/AdBanner";
 
 export const metadata: Metadata = {
   title: "Support — EinfachVolley",
@@ -111,7 +112,9 @@ export default function SupportPage() {
         </Card>
       </div>
 
-      <footer className="mt-10 text-sm text-gray-500 dark:text-gray-400">
+      <AdBanner format="horizontal" className="mt-8" />
+
+      <footer className="mt-8 text-sm text-gray-500 dark:text-gray-400">
         <p>© {new Date().getFullYear()} EinfachVolley</p>
       </footer>
     </div>

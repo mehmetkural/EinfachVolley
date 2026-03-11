@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/Button";
+import { AdBanner } from "@/components/AdBanner";
 
 export default function LandingPage() {
   return (
@@ -34,6 +35,9 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      {/* Ad — below hero */}
+      <AdBanner format="horizontal" className="mb-10" />
 
       {/* Features */}
       <section className="py-10 grid md:grid-cols-3 gap-5 pb-20">
