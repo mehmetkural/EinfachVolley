@@ -32,4 +32,6 @@ export interface VolleyMatch {
   guests: Record<string, MatchGuest[]>;
   createdAt: Timestamp;
   status: MatchStatus;
+  attendees?: string[];       // who actually showed up (set on completion)
+  completedAt?: Timestamp;
 }

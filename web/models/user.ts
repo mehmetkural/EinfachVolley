@@ -8,6 +8,7 @@ export interface UserProfile {
   skillLevel: number;
   matchesPlayed: number;
   rating: number;
+  ratingCount: number;
   createdAt: Timestamp;
   lastNameChangeDate: Timestamp;
   isAdmin?: boolean;
