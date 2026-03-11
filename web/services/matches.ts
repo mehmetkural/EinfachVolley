@@ -21,45 +21,59 @@ import {
 import { db } from "@/firebase/client";
 import type { VolleyMatch, MatchGuest } from "@/models/match";
 
-/** Subscribe to all active upcoming matches (real-time) */
+/** Subscribe to all active upcoming matches (real-time)
+ *  Sorts client-side to avoid requiring a composite Firestore index.
+ */
 export function subscribeToActiveMatches(
-  callback: (matches: VolleyMatch[]) => void
-): () => void {
-  const nowMinus5 = new Date(Date.now() - 5 * 60 * 1000);
-  const q = query(
-    collection(db, "matches"),
-    where("status", "==", "active"),
-    where("date", ">=", Timestamp.fromDate(nowMinus5)),
-    orderBy("date", "asc")
-  );
-
-  return onSnapshot(q, (snap) => {
-    const matches = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    })) as VolleyMatch[];
-    callback(matches);
-  });
-}
-
-/** Subscribe to matches where user is a participant (real-time) */
-export function subscribeToMyMatches(
-  uid: string,
-  callback: (matches: VolleyMatch[]) => void
+  callback: (matches: VolleyMatch[], error?: string) => void
 ): () => void {
   const q = query(
     collection(db, "matches"),
-    where("participants", "array-contains", uid),
     where("status", "==", "active")
   );
 
-  return onSnapshot(q, (snap) => {
-    const matches = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    })) as VolleyMatch[];
-    callback(matches);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const nowMinus5 = new Date(Date.now() - 5 * 60 * 1000);
+      const matches = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as VolleyMatch)
+        .filter((m) => m.date.toDate() >= nowMinus5)
+        .sort((a, b) => a.date.toDate().getTime() - b.date.toDate().getTime());
+      callback(matches);
+    },
+    (err) => {
+      console.error("[Firestore] subscribeToActiveMatches:", err);
+      callback([], err.message);
+    }
+  );
+}
+
+/** Subscribe to matches where user is a participant (real-time)
+ *  Filters by participants only to avoid composite index requirement.
+ */
+export function subscribeToMyMatches(
+  uid: string,
+  callback: (matches: VolleyMatch[], error?: string) => void
+): () => void {
+  const q = query(
+    collection(db, "matches"),
+    where("participants", "array-contains", uid)
+  );
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const matches = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as VolleyMatch)
+        .filter((m) => m.status === "active");
+      callback(matches);
+    },
+    (err) => {
+      console.error("[Firestore] subscribeToMyMatches:", err);
+      callback([], err.message);
+    }
+  );
 }
 
 /** Join a match as a registered user */

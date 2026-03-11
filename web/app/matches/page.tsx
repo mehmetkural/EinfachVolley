@@ -15,6 +15,7 @@ export default function MatchesPage() {
   const router = useRouter();
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,7 +24,8 @@ export default function MatchesPage() {
     }
     if (!user) return;
 
-    const unsubscribe = subscribeToActiveMatches((data) => {
+    const unsubscribe = subscribeToActiveMatches((data, err) => {
+      if (err) setFetchError(err);
       setMatches(data);
       setFetching(false);
     });
@@ -51,6 +53,12 @@ export default function MatchesPage() {
           </Link>
         </div>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+          ⚠️ {fetchError}
+        </div>
+      )}
 
       {matches.length === 0 ? (
         <div className="text-center py-20 text-gray-500 dark:text-gray-400">
