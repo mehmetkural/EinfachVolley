@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ export default function MatchesPage() {
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -25,22 +26,22 @@ export default function MatchesPage() {
     if (!user) return;
 
     const unsubscribe = subscribeToActiveMatches((data, err) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (err) setFetchError(err);
       setMatches(data);
       setFetching(false);
     });
 
-    // Timeout: eğer 10 saniyede Firestore cevap vermezse hata göster
-    const timeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setFetchError(
-        "Firestore bağlantısı kurulamadı. Firebase Security Rules'u kontrol et: Firebase Console → Firestore → Rules → allow read: if request.auth != null"
+        "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules → allow read: if request.auth != null"
       );
       setFetching(false);
     }, 10000);
 
     return () => {
       unsubscribe();
-      clearTimeout(timeout);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [user, loading, router]);
 

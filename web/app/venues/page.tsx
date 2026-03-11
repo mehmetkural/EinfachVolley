@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -39,6 +39,7 @@ export default function VenuesPage() {
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -48,6 +49,8 @@ export default function VenuesPage() {
     if (!user) return;
 
     const unsubVenues = subscribeToVenues((v, err) => {
+      // Cancel timeout — Firestore responded (success or error)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (err) setFetchError(err);
       setVenues(v);
       setFetching(false);
@@ -55,7 +58,7 @@ export default function VenuesPage() {
 
     const unsubMatches = subscribeToActiveMatches((m) => setMatches(m));
 
-    const timeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setFetchError(
         "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules bölümünden kuralları publish et."
       );
@@ -65,7 +68,7 @@ export default function VenuesPage() {
     return () => {
       unsubVenues();
       unsubMatches();
-      clearTimeout(timeout);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [user, loading, router]);
 
