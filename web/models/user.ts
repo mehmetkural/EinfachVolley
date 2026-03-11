@@ -10,6 +10,7 @@ export interface UserProfile {
   rating: number;
   createdAt: Timestamp;
   lastNameChangeDate: Timestamp;
+  isAdmin?: boolean;
 }
 
 export type VolleyPosition =

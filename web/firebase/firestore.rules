@@ -2,19 +2,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: any authenticated user can read profiles; only owner can write
+    // Helper: check if caller is an admin
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Users: any authenticated user can read; only owner can write
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
     // Matches: any authenticated user can read and create
-    // Only the organizer can update or delete
+    // Only organizer can update or delete
     match /matches/{matchId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null
         && resource.data.organizerId == request.auth.uid;
+    }
+
+    // Venues: anyone authenticated can read; only admins can write
+    match /venues/{venueId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     // Deny everything else
