@@ -20,6 +20,7 @@ interface VenueGroup {
   venueAddress: string;
   latitude: number;
   longitude: number;
+  isPaid: boolean;
   matches: VolleyMatch[];
 }
 
@@ -78,6 +79,7 @@ export default function VenuesPage() {
     venueAddress: v.address,
     latitude: v.latitude,
     longitude: v.longitude,
+    isPaid: v.isPaid ?? false,
     matches: matches.filter((m) => m.venueName === v.name),
   }));
 
@@ -163,15 +165,20 @@ export default function VenuesPage() {
                     📍 {venue.venueAddress}
                   </p>
                 </div>
-                <span
-                  className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
-                    venue.matches.length > 0
-                      ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  {venue.matches.length > 0 ? `${venue.matches.length} maç` : "Maç yok"}
-                </span>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      venue.matches.length > 0
+                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    {venue.matches.length > 0 ? `${venue.matches.length} maç` : "Maç yok"}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${venue.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
+                    {venue.isPaid ? "Ücretli" : "Ücretsiz"}
+                  </span>
+                </div>
               </div>
 
               {venue.matches.slice(0, 2).map((m) => (
@@ -195,6 +202,9 @@ export default function VenuesPage() {
             <div>
               <h3 className="font-bold text-gray-900 dark:text-gray-100">{selectedGroup.venueName}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">📍 {selectedGroup.venueAddress}</p>
+              <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${selectedGroup.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
+                {selectedGroup.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}
+              </span>
             </div>
             <button
               onClick={() => setSelected(null)}

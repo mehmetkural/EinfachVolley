@@ -9,6 +9,7 @@ interface VenueGroup {
   venueAddress: string;
   latitude: number;
   longitude: number;
+  isPaid: boolean;
   matches: { id: string; currentPlayerCount: number; maxPlayers: number; date: { toDate: () => Date } }[];
 }
 
@@ -69,7 +70,8 @@ function makePopupHtml(venue: VenueGroup): string {
   return `
     <div style="min-width:200px">
       <div style="font-weight:700;font-size:14px;margin-bottom:2px">${venue.venueName}</div>
-      <div style="font-size:12px;color:#666;margin-bottom:8px">📍 ${venue.venueAddress}</div>
+      <div style="font-size:12px;color:#666;margin-bottom:4px">📍 ${venue.venueAddress}</div>
+      <div style="font-size:11px;margin-bottom:8px;display:inline-block;padding:1px 8px;border-radius:20px;background:${venue.isPaid ? "#fef3c7" : "#d1fae5"};color:${venue.isPaid ? "#92400e" : "#065f46"}">${venue.isPaid ? "Ücretli" : "Ücretsiz"}</div>
       ${matchRows}${extra}${noMatch}
     </div>`;
 }
