@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { VolleyMatch } from "@/models/match";
 import { Card } from "./Card";
 
@@ -28,6 +29,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
   const isFull = spotsLeft <= 0;
 
   return (
+    <Link href={"/matches/" + match.id} className="block">
     <Card className="hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div>
@@ -66,7 +68,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
         </div>
         {onJoin && (
           <button
-            onClick={() => onJoin(match.id)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onJoin(match.id); }}
             disabled={isFull || isJoined}
             className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
               isJoined
@@ -81,5 +83,6 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
         )}
       </div>
     </Card>
+    </Link>
   );
 }
