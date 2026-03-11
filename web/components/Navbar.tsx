@@ -49,6 +49,11 @@ export function Navbar() {
                   Dashboard
                 </Button>
               </Link>
+              <Link href="/profile">
+                <Button variant="secondary" size="sm">
+                  Profil
+                </Button>
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 Sign Out
               </Button>
