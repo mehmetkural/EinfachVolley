@@ -37,6 +37,7 @@ export default function VenuesPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,18 +47,25 @@ export default function VenuesPage() {
     }
     if (!user) return;
 
-    // Load all venues from venues collection
-    const unsubVenues = subscribeToVenues((v) => {
+    const unsubVenues = subscribeToVenues((v, err) => {
+      if (err) setFetchError(err);
       setVenues(v);
       setFetching(false);
     });
 
-    // Load active matches separately to show match counts
     const unsubMatches = subscribeToActiveMatches((m) => setMatches(m));
+
+    const timeout = setTimeout(() => {
+      setFetchError(
+        "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules bölümünden kuralları publish et."
+      );
+      setFetching(false);
+    }, 10000);
 
     return () => {
       unsubVenues();
       unsubMatches();
+      clearTimeout(timeout);
     };
   }, [user, loading, router]);
 
@@ -80,6 +88,12 @@ export default function VenuesPage() {
           {venueGroups.length} saha · {venueGroups.reduce((a, v) => a + v.matches.length, 0)} aktif maç
         </span>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+          ⚠️ {fetchError}
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Venue list */}
