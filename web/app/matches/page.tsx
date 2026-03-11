@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscribeToActiveMatches, joinMatch } from "@/services/matches";
 import { MatchCard } from "@/components/MatchCard";
 import { Loader } from "@/components/Loader";
+import { Button } from "@/components/Button";
 import type { VolleyMatch } from "@/models/match";
 
 export default function MatchesPage() {
@@ -40,9 +42,14 @@ export default function MatchesPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Aktif Maçlar</h1>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {matches.length} maç
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {matches.length} maç
+          </span>
+          <Link href="/matches/new">
+            <Button size="sm">Maç Oluştur</Button>
+          </Link>
+        </div>
       </div>
 
       {matches.length === 0 ? (
