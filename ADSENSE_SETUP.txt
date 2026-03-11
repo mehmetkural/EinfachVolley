@@ -1,0 +1,69 @@
+Google AdSense Kurulum Rehberi — EinfachVolley
+==============================================
+
+1. HESAP AÇILDIKTAN SONRA
+--------------------------
+- adsense.google.com'dan hesabına gir
+- "Sites" bölümünden einfachvolley.vercel.app (veya özel domain) ekle
+- Onay için birkaç gün bekle
+
+2. ADSENSE CLIENT ID'Yİ AL
+---------------------------
+- AdSense Dashboard → Account → Account information
+- "Publisher ID" şu formatta: ca-pub-XXXXXXXXXXXXXXXX
+- Bunu kopyala
+
+3. VERCEL'E ENV DEĞİŞKENİ EKLE
+--------------------------------
+- vercel.com → projen → Settings → Environment Variables
+- Şunu ekle:
+  Name:  NEXT_PUBLIC_ADSENSE_CLIENT
+  Value: ca-pub-XXXXXXXXXXXXXXXX  (kendi ID'n)
+- "Save" → "Redeploy" yap
+
+4. ADSENSE SCRIPT'İNİ LAYOUT'A EKLE
+-------------------------------------
+- Dosya: /Users/mehmetkural/EinfachVolley/web/app/layout.tsx
+- <head> içine şunu ekle (Publisher ID'ni yaz):
+
+  <Script
+    async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+    crossOrigin="anonymous"
+    strategy="afterInteractive"
+  />
+
+- Dosyanın en üstüne import ekle:
+  import Script from "next/script";
+
+5. REKLAM BİRİMLERİ OLUŞTUR
+-----------------------------
+- AdSense Dashboard → Ads → By ad unit → Display ads
+- Her birim için bir "Slot ID" alırsın (örn: 1234567890)
+
+6. SLOT ID'LERİ KODA EKLE
+---------------------------
+- Dosya: /Users/mehmetkural/EinfachVolley/web/app/page.tsx
+  <AdBanner format="horizontal" slot="SLOT_ID_BURAYA" className="mb-10" />
+
+- Dosya: /Users/mehmetkural/EinfachVolley/web/app/support/page.tsx
+  <AdBanner format="horizontal" slot="SLOT_ID_BURAYA" className="mt-8" />
+
+7. YENI REKLAM ALANLARI EKLEMEK İSTERSEN
+-----------------------------------------
+- AdBanner component'i şu formatlarda kullanabilirsin:
+  format="horizontal"   → 728x90  (sayfanın üstü/altı için ideal)
+  format="rectangle"    → 300x250 (içerik arası için ideal)
+  format="vertical"     → 160x600 (sidebar için ideal)
+
+- Örnek kullanım:
+  <AdBanner format="rectangle" slot="SLOT_ID" />
+
+8. TEST ET
+-----------
+- slot prop'u olmadan (veya dev ortamında) gri placeholder görünür — bu normal
+- Gerçek reklamlar sadece slot + NEXT_PUBLIC_ADSENSE_CLIENT tanımlıyken çalışır
+- Reklamların görünmesi için sitenin AdSense tarafından onaylanmış olması gerekir
+
+NOT: AdSense politikası gereği sitende gizlilik politikası sayfası olmalı.
+     /support sayfasında zaten var, sorun yok.
