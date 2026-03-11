@@ -69,15 +69,15 @@ export default function ProfilePage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !profile) return;
+    if (!user) return;
     setError("");
     setSaving(true);
 
     try {
-      const nameChanged = displayName !== profile.displayName;
-      if (nameChanged && !canChangeName(profile.lastNameChangeDate)) {
+      const nameChanged = displayName !== profile?.displayName;
+      if (nameChanged && !canChangeName(profile?.lastNameChangeDate)) {
         setError(
-          `İsim değişikliği ${nextChangeDate(profile.lastNameChangeDate)} tarihine kadar mümkün değil.`
+          `İsim değişikliği ${nextChangeDate(profile!.lastNameChangeDate)} tarihine kadar mümkün değil.`
         );
         setSaving(false);
         return;
