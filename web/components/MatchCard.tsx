@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { VolleyMatch } from "@/models/match";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MatchCardProps {
   match: VolleyMatch;
@@ -7,8 +10,8 @@ interface MatchCardProps {
   isJoined?: boolean;
 }
 
-function formatDate(ts: { toDate: () => Date }): string {
-  return ts.toDate().toLocaleDateString("tr-TR", {
+function formatDate(ts: { toDate: () => Date }, locale: string): string {
+  return ts.toDate().toLocaleDateString(locale, {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -17,12 +20,6 @@ function formatDate(ts: { toDate: () => Date }): string {
   });
 }
 
-const genderLabel: Record<string, string> = {
-  mixed: "Mixed",
-  male: "Erkek",
-  female: "Kadın",
-};
-
 const genderColor: Record<string, string> = {
   mixed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   male: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -30,6 +27,7 @@ const genderColor: Record<string, string> = {
 };
 
 export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
+  const { t } = useLanguage();
   const spotsLeft = match.maxPlayers - match.currentPlayerCount;
   const isFull = spotsLeft <= 0;
   const fillPct = (match.currentPlayerCount / match.maxPlayers) * 100;
@@ -50,7 +48,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
               ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
               : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
           }`}>
-            {isFull ? "Dolu" : `${spotsLeft} yer kaldı`}
+            {isFull ? t.matchCard.full : t.matchCard.spotsLeft.replace("{count}", String(spotsLeft))}
           </span>
         </div>
 
@@ -60,22 +58,22 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            {formatDate(match.date)}
+            {formatDate(match.date, t.locale)}
           </span>
           <span className="text-gray-400">·</span>
-          <span className="text-gray-500 dark:text-gray-400 text-xs">{match.duration} saat</span>
+          <span className="text-gray-500 dark:text-gray-400 text-xs">{match.duration} {t.matchCard.hours}</span>
         </div>
 
         {/* Tags row */}
         <div className="flex flex-wrap gap-1.5 mb-3">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${genderColor[match.genderType] ?? "bg-gray-100 text-gray-600"}`}>
-            {genderLabel[match.genderType] ?? match.genderType}
+            {t.gender[match.genderType as keyof typeof t.gender] ?? match.genderType}
           </span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
             Lv {match.skillLevelMin}–{match.skillLevelMax}
           </span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
-            {match.pricePerPlayer === 0 ? "Ücretsiz" : `€${match.pricePerPlayer}/kişi`}
+            {match.pricePerPlayer === 0 ? t.matchCard.free : t.matchCard.perPerson.replace("{price}", String(match.pricePerPlayer))}
           </span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
             Net {match.netHeight}
@@ -86,7 +84,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>{match.currentPlayerCount}/{match.maxPlayers} oyuncu</span>
+              <span>{t.matchCard.players.replace("{current}", String(match.currentPlayerCount)).replace("{max}", String(match.maxPlayers))}</span>
               <span className="text-gray-400">{match.organizerName}</span>
             </div>
             <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -108,7 +106,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
                   : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
               }`}
             >
-              {isJoined ? "✓ Katıldın" : "Katıl"}
+              {isJoined ? t.matchCard.joined : t.matchCard.join}
             </button>
           )}
         </div>

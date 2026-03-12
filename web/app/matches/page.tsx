@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { subscribeToActiveMatches, subscribeToPastMatches, joinMatch } from "@/services/matches";
 import { MatchCard } from "@/components/MatchCard";
 import { Loader } from "@/components/Loader";
@@ -12,6 +13,7 @@ import type { VolleyMatch } from "@/models/match";
 export default function MatchesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [pastMatches, setPastMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -36,9 +38,7 @@ export default function MatchesPage() {
     const unsubPast = subscribeToPastMatches((data) => setPastMatches(data));
 
     timeoutRef.current = setTimeout(() => {
-      setFetchError(
-        "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules → allow read: if request.auth != null"
-      );
+      setFetchError(t.matches.firestoreError);
       setFetching(false);
     }, 10000);
 
@@ -60,14 +60,16 @@ export default function MatchesPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Aktif Maçlar</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{matches.length} maç mevcut</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{t.matches.title}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {t.matches.available.replace("{count}", String(matches.length))}
+          </p>
         </div>
         <Link
           href="/matches/new"
           className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
         >
-          + Maç Oluştur
+          {t.matches.createMatch}
         </Link>
       </div>
 
@@ -80,8 +82,8 @@ export default function MatchesPage() {
       {matches.length === 0 ? (
         <div className="text-center py-20 text-gray-500 dark:text-gray-400">
           <div className="text-5xl mb-4">🏐</div>
-          <p className="text-lg font-medium">Aktif maç yok</p>
-          <p className="text-sm mt-1">Şu an katılabilecek bir maç bulunmuyor.</p>
+          <p className="text-lg font-medium">{t.matches.noMatches}</p>
+          <p className="text-sm mt-1">{t.matches.noMatchesDesc}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -96,14 +98,13 @@ export default function MatchesPage() {
         </div>
       )}
 
-      {/* Past matches collapsible */}
       {pastMatches.length > 0 && (
         <div className="mt-8">
           <button
             onClick={() => setPastOpen((p) => !p)}
             className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
-            <span>Geçmiş Maçlar ({pastMatches.length})</span>
+            <span>{t.matches.pastMatches.replace("{count}", String(pastMatches.length))}</span>
             <span>{pastOpen ? "▲" : "▼"}</span>
           </button>
           {pastOpen && (

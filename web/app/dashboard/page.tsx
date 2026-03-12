@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { subscribeToMyMatches } from "@/services/matches";
 import { getDocument } from "@/services/firestore";
 import { MatchCard } from "@/components/MatchCard";
 import { Loader } from "@/components/Loader";
 import type { VolleyMatch } from "@/models/match";
 import type { UserProfile } from "@/models/user";
-
-const SKILL_LABELS: Record<number, string> = { 1: "Başlangıç", 2: "Amatör", 3: "Orta", 4: "İleri", 5: "Uzman" };
 
 const POSITION_ICONS: Record<string, string> = {
   Universal: "🔄",
@@ -25,6 +24,7 @@ const POSITION_ICONS: Record<string, string> = {
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -47,20 +47,21 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const firstName = profile?.displayName?.split(" ")[0] ?? user.email?.split("@")[0] ?? "Oyuncu";
+  const skillLabels = t.skill;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Hoş geldin 👋</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t.dashboard.welcome}</p>
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{firstName}</h1>
         </div>
         <Link
           href="/matches/new"
           className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
         >
-          + Maç Oluştur
+          {t.dashboard.createMatch}
         </Link>
       </div>
 
@@ -68,7 +69,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           {
-            label: "Oynanan Maç",
+            label: t.dashboard.matchesPlayed,
             value: profile?.matchesPlayed ?? 0,
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
@@ -81,7 +82,7 @@ export default function DashboardPage() {
             bg: "bg-blue-50 dark:bg-blue-900/20",
           },
           {
-            label: "Rating",
+            label: t.dashboard.rating,
             value: profile?.rating?.toFixed(1) ?? "—",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
@@ -92,8 +93,8 @@ export default function DashboardPage() {
             bg: "bg-amber-50 dark:bg-amber-900/20",
           },
           {
-            label: "Seviye",
-            value: profile?.skillLevel ? SKILL_LABELS[profile.skillLevel] ?? profile.skillLevel : "—",
+            label: t.dashboard.level,
+            value: profile?.skillLevel ? skillLabels[profile.skillLevel as keyof typeof skillLabels] ?? profile.skillLevel : "—",
             icon: (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
                 <rect x="3" y="13" width="4" height="8" rx="1" /><rect x="10" y="9" width="4" height="12" rx="1" /><rect x="17" y="4" width="4" height="17" rx="1" />
@@ -103,7 +104,7 @@ export default function DashboardPage() {
             bg: "bg-emerald-50 dark:bg-emerald-900/20",
           },
           {
-            label: "Pozisyon",
+            label: t.dashboard.position,
             value: profile?.position
               ? `${POSITION_ICONS[profile.position] ?? ""} ${profile.position}`
               : "—",
@@ -132,9 +133,9 @@ export default function DashboardPage() {
       {/* My matches */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Katıldığım Maçlar</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t.dashboard.myMatches}</h2>
           <Link href="/matches" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
-            Tümünü gör →
+            {t.dashboard.viewAll}
           </Link>
         </div>
 
@@ -147,13 +148,13 @@ export default function DashboardPage() {
                 <path d="M3.5 8.5h17M3.5 15.5h17" />
               </svg>
             </div>
-            <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">Henüz maçın yok</p>
-            <p className="text-sm text-gray-400 mb-4">Aktif bir maça katıl veya kendin oluştur.</p>
+            <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">{t.dashboard.noMatches}</p>
+            <p className="text-sm text-gray-400 mb-4">{t.dashboard.noMatchesDesc}</p>
             <Link
               href="/matches"
               className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-colors"
             >
-              Maç Bul
+              {t.dashboard.findMatch}
             </Link>
           </div>
         ) : (

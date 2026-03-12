@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { collection, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
 import { getVenues } from "@/services/venues";
@@ -13,37 +14,32 @@ import { Loader } from "@/components/Loader";
 import { trackEvent } from "@/lib/analytics";
 import type { Venue } from "@/models/venue";
 
-const NET_HEIGHTS = ["2.24m (Kadın)", "2.35m (Mixed)", "2.43m (Erkek)"];
-const DURATIONS = [
-  { value: "1", label: "1 saat" },
-  { value: "1.5", label: "1,5 saat" },
-  { value: "2", label: "2 saat" },
-  { value: "2.5", label: "2,5 saat" },
-  { value: "3", label: "3 saat" },
-  { value: "3.5", label: "3,5 saat" },
-  { value: "4", label: "4 saat" },
-];
-const GENDER_TYPES = [
-  { value: "mixed", label: "Mixed" },
-  { value: "male", label: "Erkek" },
-  { value: "female", label: "Kadın" },
-];
-
 export default function NewMatchPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
 
+  const DURATIONS = t.matchNew.durations.map((label, i) => ({
+    value: ["1", "1.5", "2", "2.5", "3", "3.5", "4"][i],
+    label,
+  }));
+  const GENDER_TYPES = t.matchNew.genderTypes.map((label, i) => ({
+    value: ["mixed", "male", "female"][i],
+    label,
+  }));
+  const NET_HEIGHTS = t.matchNew.netHeights;
+
   const [form, setForm] = useState({
     date: "",
     time: "",
     duration: "2",
     genderType: "mixed",
-    netHeight: "2.35m (Mixed)",
+    netHeight: NET_HEIGHTS[1],
     maxPlayers: "12",
     skillLevelMin: "1",
     skillLevelMax: "5",
@@ -68,7 +64,7 @@ export default function NewMatchPage() {
     e.preventDefault();
     if (!user) return;
     if (!selectedVenue) {
-      setError("Lütfen bir saha seçin.");
+      setError(t.matchNew.errorVenue);
       return;
     }
     setError("");
@@ -77,7 +73,7 @@ export default function NewMatchPage() {
     try {
       const dateTime = new Date(`${form.date}T${form.time}`);
       if (isNaN(dateTime.getTime())) {
-        setError("Geçerli bir tarih ve saat girin.");
+        setError(t.matchNew.errorDate);
         setLoading(false);
         return;
       }
@@ -108,7 +104,7 @@ export default function NewMatchPage() {
       trackEvent("match_created");
       router.push("/matches");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Maç oluşturulamadı.");
+      setError(err instanceof Error ? err.message : t.matchNew.errorCreate);
     } finally {
       setLoading(false);
     }
@@ -118,19 +114,19 @@ export default function NewMatchPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Yeni Maç Oluştur</h1>
+      <h1 className="text-3xl font-bold mb-6">{t.matchNew.title}</h1>
 
       {venues.length === 0 ? (
         <Card className="text-center py-10 text-gray-500 dark:text-gray-400">
           <div className="text-4xl mb-3">📍</div>
-          <p className="font-medium">Henüz saha eklenmemiş.</p>
-          <p className="text-sm mt-1">Maç oluşturmak için önce bir admin saha eklemeli.</p>
+          <p className="font-medium">{t.matchNew.noVenues}</p>
+          <p className="text-sm mt-1">{t.matchNew.noVenuesDesc}</p>
         </Card>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Venue selector */}
           <Card>
-            <h2 className="font-semibold mb-4">📍 Saha Seç</h2>
+            <h2 className="font-semibold mb-4">{t.matchNew.selectVenue}</h2>
             <select
               value={selectedVenue?.id ?? ""}
               onChange={(e) => {
@@ -153,11 +149,11 @@ export default function NewMatchPage() {
 
           {/* Date & Time */}
           <Card>
-            <h2 className="font-semibold mb-4">📅 Tarih ve Süre</h2>
+            <h2 className="font-semibold mb-4">{t.matchNew.dateTime}</h2>
             <div className="grid grid-cols-2 gap-3">
               <Input
                 id="date"
-                label="Tarih"
+                label={t.matchNew.date}
                 type="date"
                 value={form.date}
                 onChange={(e) => set("date", e.target.value)}
@@ -165,7 +161,7 @@ export default function NewMatchPage() {
               />
               <Input
                 id="time"
-                label="Saat"
+                label={t.matchNew.time}
                 type="time"
                 value={form.time}
                 onChange={(e) => set("time", e.target.value)}
@@ -173,7 +169,7 @@ export default function NewMatchPage() {
               />
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Süre
+                  {t.matchNew.duration}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {DURATIONS.map((d) => (
@@ -197,11 +193,11 @@ export default function NewMatchPage() {
 
           {/* Match settings */}
           <Card>
-            <h2 className="font-semibold mb-4">⚙️ Maç Ayarları</h2>
+            <h2 className="font-semibold mb-4">{t.matchNew.settings}</h2>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Cinsiyet Türü
+                  {t.matchNew.genderType}
                 </label>
                 <div className="flex gap-2">
                   {GENDER_TYPES.map((g) => (
@@ -223,7 +219,7 @@ export default function NewMatchPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  File Yüksekliği
+                  {t.matchNew.netHeight}
                 </label>
                 <select
                   value={form.netHeight}
@@ -239,7 +235,7 @@ export default function NewMatchPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   id="maxPlayers"
-                  label="Maks. Oyuncu"
+                  label={t.matchNew.maxPlayers}
                   type="number"
                   min="2"
                   max="30"
@@ -249,7 +245,7 @@ export default function NewMatchPage() {
                 />
                 <Input
                   id="pricePerPlayer"
-                  label="Kişi Başı Ücret (€)"
+                  label={t.matchNew.pricePerPlayer}
                   type="number"
                   min="0"
                   step="0.5"
@@ -262,7 +258,7 @@ export default function NewMatchPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   id="skillLevelMin"
-                  label="Min. Seviye (1-5)"
+                  label={t.matchNew.minLevel}
                   type="number"
                   min="1"
                   max="5"
@@ -272,7 +268,7 @@ export default function NewMatchPage() {
                 />
                 <Input
                   id="skillLevelMax"
-                  label="Maks. Seviye (1-5)"
+                  label={t.matchNew.maxLevel}
                   type="number"
                   min="1"
                   max="5"
@@ -286,11 +282,11 @@ export default function NewMatchPage() {
 
           {/* Notes */}
           <Card>
-            <h2 className="font-semibold mb-4">📝 Notlar</h2>
+            <h2 className="font-semibold mb-4">{t.matchNew.notes}</h2>
             <textarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
-              placeholder="Ek bilgiler, ekipman, uyarılar..."
+              placeholder={t.matchNew.notesPlaceholder}
               rows={3}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
@@ -302,10 +298,10 @@ export default function NewMatchPage() {
 
           <div className="flex gap-3">
             <Button type="submit" className="flex-1" loading={loading}>
-              Maç Oluştur
+              {t.matchNew.create}
             </Button>
             <Button type="button" variant="secondary" onClick={() => router.back()}>
-              İptal
+              {t.matchNew.cancel}
             </Button>
           </div>
         </form>

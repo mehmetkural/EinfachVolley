@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getDocument } from "@/services/firestore";
 import { subscribeToActiveMatches } from "@/services/matches";
 import { subscribeToVenues } from "@/services/venues";
@@ -24,18 +25,10 @@ interface VenueGroup {
   matches: VolleyMatch[];
 }
 
-function formatDate(ts: { toDate: () => Date }): string {
-  return ts.toDate().toLocaleDateString("tr-TR", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export default function VenuesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [matches, setMatches] = useState<VolleyMatch[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -63,7 +56,7 @@ export default function VenuesPage() {
     const unsubMatches = subscribeToActiveMatches((m) => setMatches(m));
 
     timeoutRef.current = setTimeout(() => {
-      setFetchError("Firestore bağlantısı kurulamadı.");
+      setFetchError(t.venues.firestoreError);
       setFetching(false);
     }, 10000);
 
@@ -86,10 +79,18 @@ export default function VenuesPage() {
   const totalMatches = venueGroups.reduce((a, v) => a + v.matches.length, 0);
   const selectedGroup = venueGroups.find((v) => v.venueName === selected) ?? null;
 
+  function formatDate(ts: { toDate: () => Date }): string {
+    return ts.toDate().toLocaleDateString(t.locale, {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
   if (loading || fetching) return <Loader className="mt-20" />;
 
   return (
-    // Break out of main container padding to fill viewport
     <div
       className="-mx-4 -mt-8 -mb-16 md:-mb-0 relative overflow-hidden"
       style={{ height: "calc(100vh - 64px)" }}
@@ -105,7 +106,7 @@ export default function VenuesPage() {
         ) : (
           <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-400 flex-col gap-3">
             <span className="text-5xl">📍</span>
-            <p>Henüz saha eklenmemiş.</p>
+            <p>{t.venues.noVenues}</p>
           </div>
         )}
       </div>
@@ -113,9 +114,9 @@ export default function VenuesPage() {
       {/* Floating top bar */}
       <div className="absolute top-4 left-4 right-4 z-[1000] flex items-start justify-between gap-3 pointer-events-none">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
-          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">Sahalar</span>
+          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{t.venues.title}</span>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-0.5">
-            {venueGroups.length} saha · {totalMatches} maç
+            {t.venues.summary.replace("{venues}", String(venueGroups.length)).replace("{matches}", String(totalMatches))}
           </span>
         </div>
         <div className="flex gap-2 pointer-events-auto">
@@ -124,14 +125,14 @@ export default function VenuesPage() {
               href="/admin/venues"
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-xl shadow-lg transition-colors"
             >
-              + Saha Ekle
+              {t.venues.addVenue}
             </Link>
           )}
           <button
             onClick={() => setListOpen((o) => !o)}
             className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm font-medium px-3 py-2 rounded-xl shadow-lg transition-colors"
           >
-            {listOpen ? "✕ Listeyi Kapat" : "☰ Sahalar"}
+            {listOpen ? t.venues.closeList : t.venues.openList}
           </button>
         </div>
       </div>
@@ -173,10 +174,12 @@ export default function VenuesPage() {
                         : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                     }`}
                   >
-                    {venue.matches.length > 0 ? `${venue.matches.length} maç` : "Maç yok"}
+                    {venue.matches.length > 0
+                      ? t.venues.matchCount.replace("{count}", String(venue.matches.length))
+                      : t.venues.noMatches}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${venue.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
-                    {venue.isPaid ? "Ücretli" : "Ücretsiz"}
+                    {venue.isPaid ? t.venues.paid : t.venues.free}
                   </span>
                 </div>
               </div>
@@ -187,7 +190,7 @@ export default function VenuesPage() {
                   className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
                 >
                   <span>📅 {formatDate(m.date)}</span>
-                  <span>{m.currentPlayerCount}/{m.maxPlayers} oyuncu</span>
+                  <span>{t.venues.players.replace("{current}", String(m.currentPlayerCount)).replace("{max}", String(m.maxPlayers))}</span>
                 </div>
               ))}
             </button>
@@ -203,7 +206,7 @@ export default function VenuesPage() {
               <h3 className="font-bold text-gray-900 dark:text-gray-100">{selectedGroup.venueName}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">📍 {selectedGroup.venueAddress}</p>
               <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${selectedGroup.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
-                {selectedGroup.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}
+                {selectedGroup.isPaid ? t.venues.paidVenue : t.venues.freeVenue}
               </span>
             </div>
             <button
@@ -230,14 +233,14 @@ export default function VenuesPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-400 mt-2">Bu sahada aktif maç bulunmuyor.</p>
+            <p className="text-xs text-gray-400 mt-2">{t.venues.noActiveMatches}</p>
           )}
 
           <Link
             href="/matches/new"
             className="block mt-3 text-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
           >
-            + Bu sahada maç oluştur
+            {t.venues.createHere}
           </Link>
         </div>
       )}

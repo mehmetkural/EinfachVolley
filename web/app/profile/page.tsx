@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getDocument, setDocument } from "@/services/firestore";
 import { Input } from "@/components/Input";
 import { Loader } from "@/components/Loader";
@@ -19,14 +20,6 @@ const POSITIONS: VolleyPosition[] = [
   "Opposite",
 ];
 
-const SKILL_LABELS: Record<number, string> = {
-  1: "Başlangıç",
-  2: "Amatör",
-  3: "Orta",
-  4: "İleri",
-  5: "Uzman",
-};
-
 const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
 
 function canChangeName(lastChangeDate: Timestamp | undefined): boolean {
@@ -34,14 +27,15 @@ function canChangeName(lastChangeDate: Timestamp | undefined): boolean {
   return Date.now() - lastChangeDate.toDate().getTime() >= THREE_MONTHS_MS;
 }
 
-function nextChangeDate(lastChangeDate: Timestamp): string {
+function nextChangeDateStr(lastChangeDate: Timestamp, locale: string): string {
   const next = new Date(lastChangeDate.toDate().getTime() + THREE_MONTHS_MS);
-  return next.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+  return next.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
 }
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,7 +70,7 @@ export default function ProfilePage() {
     try {
       const nameChanged = displayName !== profile?.displayName;
       if (nameChanged && !canChangeName(profile?.lastNameChangeDate)) {
-        setError(`İsim değişikliği ${nextChangeDate(profile!.lastNameChangeDate)} tarihine kadar mümkün değil.`);
+        setError(t.profile.nameChangeLocked.replace("{date}", nextChangeDateStr(profile!.lastNameChangeDate, t.locale)));
         setSaving(false);
         return;
       }
@@ -93,7 +87,7 @@ export default function ProfilePage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Kaydetme başarısız.");
+      setError(e instanceof Error ? e.message : t.profile.errorSave);
     } finally {
       setSaving(false);
     }
@@ -103,17 +97,18 @@ export default function ProfilePage() {
   if (!user) return null;
 
   const nameChangeable = canChangeName(profile?.lastNameChangeDate);
+  const skillLabels = t.skill;
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Profil</h1>
+      <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{t.profile.title}</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Maç", value: profile?.matchesPlayed ?? 0, color: "text-blue-600 dark:text-blue-400" },
-          { label: "Rating", value: profile?.rating?.toFixed(1) ?? "—", color: "text-amber-600 dark:text-amber-400" },
-          { label: "Seviye", value: SKILL_LABELS[profile?.skillLevel ?? 0] ?? "—", color: "text-emerald-600 dark:text-emerald-400" },
+          { label: t.profile.matches, value: profile?.matchesPlayed ?? 0, color: "text-blue-600 dark:text-blue-400" },
+          { label: t.profile.rating, value: profile?.rating?.toFixed(1) ?? "—", color: "text-amber-600 dark:text-amber-400" },
+          { label: t.profile.level, value: skillLabels[profile?.skillLevel as keyof typeof skillLabels ?? 0] ?? "—", color: "text-emerald-600 dark:text-emerald-400" },
         ].map((s) => (
           <div key={s.label} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 text-center">
             <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
@@ -128,11 +123,11 @@ export default function ProfilePage() {
           <div>
             <Input
               id="displayName"
-              label="Görünen Ad"
+              label={t.profile.displayName}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={!nameChangeable}
-              placeholder="Adın"
+              placeholder={t.profile.namePlaceholder}
               required
             />
             {!nameChangeable && profile?.lastNameChangeDate && (
@@ -140,16 +135,16 @@ export default function ProfilePage() {
                 <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
                   <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                 </svg>
-                İsim değişikliği {nextChangeDate(profile.lastNameChangeDate)} tarihinde mümkün olacak.
+                {t.profile.nameChangeAvailable.replace("{date}", nextChangeDateStr(profile.lastNameChangeDate, t.locale))}
               </p>
             )}
           </div>
 
-          <Input id="email" label="E-posta" value={user.email ?? "Anonim kullanıcı"} disabled />
+          <Input id="email" label={t.profile.email} value={user.email ?? t.profile.anonymous} disabled />
 
           {/* Position */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pozisyon</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.position}</label>
             <div className="grid grid-cols-2 gap-2">
               {POSITIONS.map((p) => (
                 <button
@@ -171,9 +166,9 @@ export default function ProfilePage() {
           {/* Skill level */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Seviye</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.profile.skillLevel}</label>
               <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                {skillLevel} — {SKILL_LABELS[skillLevel]}
+                {skillLevel} — {skillLabels[skillLevel as keyof typeof skillLabels]}
               </span>
             </div>
             <input
@@ -186,9 +181,9 @@ export default function ProfilePage() {
               className="w-full accent-blue-600"
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>Başlangıç</span>
-              <span>Orta</span>
-              <span>Uzman</span>
+              <span>{skillLabels[1]}</span>
+              <span>{skillLabels[3]}</span>
+              <span>{skillLabels[5]}</span>
             </div>
           </div>
 
@@ -206,15 +201,14 @@ export default function ProfilePage() {
             disabled={saving}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl transition-colors"
           >
-            {saving ? "Kaydediliyor..." : saved ? "✓ Kaydedildi" : "Kaydet"}
+            {saving ? t.profile.saving : saved ? t.profile.saved : t.profile.save}
           </button>
         </form>
       </div>
 
-      {/* Support */}
       <div className="text-center pb-2">
         <Link href="/support" className="text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 transition-colors">
-          Yardım & Destek
+          {t.profile.support}
         </Link>
       </div>
     </div>

@@ -1,10 +1,7 @@
-import { Metadata } from "next";
-import { AdBanner } from "@/components/AdBanner";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Mağaza — EinfachVolley",
-  description: "Voleybol ekipmanları ve ürünleri",
-};
+import { AdBanner } from "@/components/AdBanner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Product {
   id: string;
@@ -19,13 +16,12 @@ interface Product {
   category: string;
 }
 
-// Replace affiliate tag "einfachvolley-21" with your real Amazon Associates tag
 const AMAZON_TAG = "einfachvolley-21";
 
 const PRODUCTS: Product[] = [
   {
     id: "1",
-    name: "Mikasa V200W Maç Topu",
+    name: "Mikasa V200W",
     description: "FIVB onaylı resmi maç topu. Profesyonel deri yüzey, mükemmel tutuş.",
     price: "~€110",
     badge: "En Çok Satan",
@@ -37,7 +33,7 @@ const PRODUCTS: Product[] = [
   },
   {
     id: "2",
-    name: "Molten V5M5000 Antrenman Topu",
+    name: "Molten V5M5000",
     description: "Dayanıklı antrenman topu, iç ve dış mekan kullanımına uygun.",
     price: "~€45",
     emoji: "🏐",
@@ -47,7 +43,7 @@ const PRODUCTS: Product[] = [
   },
   {
     id: "3",
-    name: "Asics Gel-Task 3 Voleybol Ayakkabısı",
+    name: "Asics Gel-Task 3",
     description: "Hafif ve duyarlı. Kort içi hızlı hareketler için tasarlandı.",
     price: "~€75",
     badge: "Popüler",
@@ -79,7 +75,7 @@ const PRODUCTS: Product[] = [
   },
   {
     id: "6",
-    name: "Taktik Parmak Bandı",
+    name: "Taktik Finger Tape",
     description: "Voleybol parmak koruyucu bant, 3'lü paket.",
     price: "~€8",
     emoji: "🩹",
@@ -99,7 +95,7 @@ const PRODUCTS: Product[] = [
   },
   {
     id: "8",
-    name: "Sporttasche Voleybol Çantası",
+    name: "Volleyball Sporttasche",
     description: "Top bölmeli voleybol çantası, tüm ekipmanlarına yeter.",
     price: "~€40",
     emoji: "🎒",
@@ -131,20 +127,18 @@ const PRODUCTS: Product[] = [
   },
 ];
 
-const CATEGORIES = ["Tümü", ...Array.from(new Set(PRODUCTS.map((p) => p.category)))];
-
 export default function StorePage() {
+  const { t } = useLanguage();
+
+  const CATEGORIES = [t.store.all, ...Array.from(new Set(PRODUCTS.map((p) => p.category)))];
+
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Mağaza</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          Voleybol ekipmanları · Amazon & Decathlon üzerinden güvenli alışveriş
-        </p>
-        <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
-          * Bağlı kuruluş bağlantıları — satın alımlarda küçük bir komisyon kazanıyoruz, sana ek maliyet yok.
-        </p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{t.store.title}</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">{t.store.subtitle}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">{t.store.affiliateNote}</p>
       </div>
 
       <AdBanner format="horizontal" className="mb-8" />
@@ -159,7 +153,6 @@ export default function StorePage() {
             rel="noopener noreferrer sponsored"
             className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-200 flex flex-col"
           >
-            {/* Emoji + badge row */}
             <div className="flex items-start justify-between mb-3">
               <div className="w-14 h-14 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center text-3xl">
                 {product.emoji}
@@ -176,7 +169,6 @@ export default function StorePage() {
               </div>
             </div>
 
-            {/* Info */}
             <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               {product.name}
             </h3>
@@ -184,11 +176,10 @@ export default function StorePage() {
               {product.description}
             </p>
 
-            {/* Footer */}
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
               <span className="font-bold text-gray-900 dark:text-gray-100">{product.price}</span>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                <span>{product.store === "amazon" ? "Amazon'da Gör" : "Decathlon'da Gör"}</span>
+                <span>{product.store === "amazon" ? t.store.viewOnAmazon : t.store.viewOnDecathlon}</span>
                 <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 group-hover:translate-x-0.5 transition-transform">
                   <path fillRule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clipRule="evenodd" />
                 </svg>
@@ -200,10 +191,8 @@ export default function StorePage() {
 
       <AdBanner format="horizontal" className="mt-10" />
 
-      {/* Affiliate disclaimer */}
       <p className="mt-8 mb-4 text-xs text-center text-gray-400 dark:text-gray-600">
-        EinfachVolley, Amazon ve Decathlon bağlı kuruluş programlarına katılmaktadır.
-        Bu sayfadaki bağlantılar aracılığıyla yapılan alışverişlerden komisyon kazanabiliriz.
+        {t.store.affiliateDisclaimer}
       </p>
     </div>
   );
