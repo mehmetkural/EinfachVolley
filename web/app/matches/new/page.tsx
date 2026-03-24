@@ -9,7 +9,6 @@ import { db } from "@/firebase/client";
 import { getVenues } from "@/services/venues";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { Card } from "@/components/Card";
 import { Loader } from "@/components/Loader";
 import { trackEvent } from "@/lib/analytics";
 import type { Venue } from "@/models/venue";
@@ -112,28 +111,33 @@ export default function NewMatchPage() {
 
   if (venuesLoading) return <Loader className="mt-20" />;
 
+  const sectionClass = "bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-6 border border-outline-variant/10";
+  const sectionTitle = "font-black text-on-surface uppercase tracking-tight text-sm mb-4";
+  const chipActive = "kinetic-gradient text-on-primary shadow-sm shadow-primary/20";
+  const chipInactive = "bg-surface-container-low dark:bg-surface-container text-on-surface-variant hover:bg-surface-container-high";
+
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">{t.matchNew.title}</h1>
+      <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase mb-6 pt-2">{t.matchNew.title}</h1>
 
       {venues.length === 0 ? (
-        <Card className="text-center py-10 text-gray-500 dark:text-gray-400">
-          <div className="text-4xl mb-3">📍</div>
-          <p className="font-medium">{t.matchNew.noVenues}</p>
-          <p className="text-sm mt-1">{t.matchNew.noVenuesDesc}</p>
-        </Card>
+        <div className={`${sectionClass} text-center py-10`}>
+          <span className="material-symbols-outlined text-[40px] text-on-surface-variant mb-3 block">location_off</span>
+          <p className="font-bold text-on-surface">{t.matchNew.noVenues}</p>
+          <p className="text-sm mt-1 text-on-surface-variant">{t.matchNew.noVenuesDesc}</p>
+        </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Venue selector */}
-          <Card>
-            <h2 className="font-semibold mb-4">{t.matchNew.selectVenue}</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Venue */}
+          <div className={sectionClass}>
+            <h2 className={sectionTitle}>{t.matchNew.selectVenue}</h2>
             <select
               value={selectedVenue?.id ?? ""}
               onChange={(e) => {
                 const v = venues.find((v) => v.id === e.target.value) ?? null;
                 setSelectedVenue(v);
               }}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none"
               required
             >
               {venues.map((v) => (
@@ -141,75 +145,50 @@ export default function NewMatchPage() {
               ))}
             </select>
             {selectedVenue && (
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                📍 {selectedVenue.address}
+              <p className="mt-2 text-xs text-on-surface-variant font-medium flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                {selectedVenue.address}
               </p>
             )}
-          </Card>
+          </div>
 
           {/* Date & Time */}
-          <Card>
-            <h2 className="font-semibold mb-4">{t.matchNew.dateTime}</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                id="date"
-                label={t.matchNew.date}
-                type="date"
-                value={form.date}
-                onChange={(e) => set("date", e.target.value)}
-                required
-              />
-              <Input
-                id="time"
-                label={t.matchNew.time}
-                type="time"
-                value={form.time}
-                onChange={(e) => set("time", e.target.value)}
-                required
-              />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t.matchNew.duration}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {DURATIONS.map((d) => (
-                    <button
-                      key={d.value}
-                      type="button"
-                      onClick={() => set("duration", d.value)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        form.duration === d.value
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
+          <div className={sectionClass}>
+            <h2 className={sectionTitle}>{t.matchNew.dateTime}</h2>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <Input id="date" label={t.matchNew.date} type="date" value={form.date} onChange={(e) => set("date", e.target.value)} required />
+              <Input id="time" label={t.matchNew.time} type="time" value={form.time} onChange={(e) => set("time", e.target.value)} required />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-secondary dark:text-outline-variant uppercase tracking-widest mb-3">{t.matchNew.duration}</label>
+              <div className="flex flex-wrap gap-2">
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => set("duration", d.value)}
+                    className={`px-3 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${form.duration === d.value ? chipActive : chipInactive}`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Match settings */}
-          <Card>
-            <h2 className="font-semibold mb-4">{t.matchNew.settings}</h2>
-            <div className="space-y-3">
+          {/* Settings */}
+          <div className={sectionClass}>
+            <h2 className={sectionTitle}>{t.matchNew.settings}</h2>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t.matchNew.genderType}
-                </label>
+                <label className="block text-xs font-bold text-secondary dark:text-outline-variant uppercase tracking-widest mb-3">{t.matchNew.genderType}</label>
                 <div className="flex gap-2">
                   {GENDER_TYPES.map((g) => (
                     <button
                       key={g.value}
                       type="button"
                       onClick={() => set("genderType", g.value)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        form.genderType === g.value
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${form.genderType === g.value ? chipActive : chipInactive}`}
                     >
                       {g.label}
                     </button>
@@ -218,13 +197,11 @@ export default function NewMatchPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t.matchNew.netHeight}
-                </label>
+                <label className="block text-xs font-bold text-secondary dark:text-outline-variant uppercase tracking-widest mb-2">{t.matchNew.netHeight}</label>
                 <select
                   value={form.netHeight}
                   onChange={(e) => set("netHeight", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none"
                 >
                   {NET_HEIGHTS.map((h) => (
                     <option key={h} value={h}>{h}</option>
@@ -233,76 +210,39 @@ export default function NewMatchPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  id="maxPlayers"
-                  label={t.matchNew.maxPlayers}
-                  type="number"
-                  min="2"
-                  max="30"
-                  value={form.maxPlayers}
-                  onChange={(e) => set("maxPlayers", e.target.value)}
-                  required
-                />
-                <Input
-                  id="pricePerPlayer"
-                  label={t.matchNew.pricePerPlayer}
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={form.pricePerPlayer}
-                  onChange={(e) => set("pricePerPlayer", e.target.value)}
-                  required
-                />
+                <Input id="maxPlayers" label={t.matchNew.maxPlayers} type="number" min="2" max="30" value={form.maxPlayers} onChange={(e) => set("maxPlayers", e.target.value)} required />
+                <Input id="pricePerPlayer" label={t.matchNew.pricePerPlayer} type="number" min="0" step="0.5" value={form.pricePerPlayer} onChange={(e) => set("pricePerPlayer", e.target.value)} required />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Input
-                  id="skillLevelMin"
-                  label={t.matchNew.minLevel}
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={form.skillLevelMin}
-                  onChange={(e) => set("skillLevelMin", e.target.value)}
-                  required
-                />
-                <Input
-                  id="skillLevelMax"
-                  label={t.matchNew.maxLevel}
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={form.skillLevelMax}
-                  onChange={(e) => set("skillLevelMax", e.target.value)}
-                  required
-                />
+                <Input id="skillLevelMin" label={t.matchNew.minLevel} type="number" min="1" max="5" value={form.skillLevelMin} onChange={(e) => set("skillLevelMin", e.target.value)} required />
+                <Input id="skillLevelMax" label={t.matchNew.maxLevel} type="number" min="1" max="5" value={form.skillLevelMax} onChange={(e) => set("skillLevelMax", e.target.value)} required />
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Notes */}
-          <Card>
-            <h2 className="font-semibold mb-4">{t.matchNew.notes}</h2>
+          <div className={sectionClass}>
+            <h2 className={sectionTitle}>{t.matchNew.notes}</h2>
             <textarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
               placeholder={t.matchNew.notesPlaceholder}
               rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary resize-none border-none placeholder:text-outline-variant"
             />
-          </Card>
+          </div>
 
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-sm text-error flex items-center gap-1.5 font-medium">
+              <span className="material-symbols-outlined text-[16px]">error</span>
+              {error}
+            </p>
           )}
 
-          <div className="flex gap-3">
-            <Button type="submit" className="flex-1" loading={loading}>
-              {t.matchNew.create}
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => router.back()}>
-              {t.matchNew.cancel}
-            </Button>
+          <div className="flex gap-3 pb-4">
+            <Button type="submit" className="flex-1" loading={loading}>{t.matchNew.create}</Button>
+            <Button type="button" variant="secondary" onClick={() => router.back()}>{t.matchNew.cancel}</Button>
           </div>
         </form>
       )}

@@ -51,12 +51,12 @@ export function Navbar() {
   }
 
   return (
-    <nav className="border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm sticky top-0 z-40">
+    <nav className="fixed top-0 w-full z-50 bg-background/80 dark:bg-inverse-surface/80 backdrop-blur-xl border-b border-outline-variant/20">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
           href={user ? "/dashboard" : "/"}
-          className="text-xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition-opacity"
+          className="text-xl font-black tracking-tighter text-primary dark:text-primary-fixed italic uppercase hover:opacity-80 transition-opacity"
         >
           EinfachVolley
         </Link>
@@ -72,8 +72,8 @@ export function Navbar() {
                   href={link.href}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                     active
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                      ? "bg-primary/10 text-primary dark:text-primary-fixed"
+                      : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface dark:hover:bg-surface-container"
                   }`}
                 >
                   {link.label}
@@ -82,28 +82,28 @@ export function Navbar() {
             })}
         </div>
 
-        {/* Language + Theme toggle + Auth actions */}
+        {/* Controls */}
         <div className="flex items-center gap-2">
           {/* Language switcher */}
           {mounted && (
             <div ref={langRef} className="relative">
               <button
                 onClick={() => setLangOpen((v) => !v)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors border border-outline-variant/30"
                 aria-label="Dil seç / Select language / Sprache wählen"
               >
                 {locale.toUpperCase()}
               </button>
               {langOpen && (
-                <div className="absolute right-0 mt-1 w-20 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden z-50">
+                <div className="absolute right-0 mt-1 w-20 rounded-xl border border-outline-variant/30 bg-surface-container-lowest dark:bg-surface-container shadow-lg overflow-hidden z-50">
                   {LOCALES.map(({ code, label }) => (
                     <button
                       key={code}
                       onClick={() => { setLocale(code); setLangOpen(false); }}
                       className={`w-full px-3 py-2 text-xs font-bold text-left transition-colors ${
                         locale === code
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          ? "bg-primary/10 text-primary dark:text-primary-fixed"
+                          : "text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container"
                       }`}
                     >
                       {label}
@@ -118,16 +118,16 @@ export function Navbar() {
           {mounted && (
             <button
               onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors"
               aria-label="Tema değiştir"
             >
               {resolvedTheme === "dark" ? (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
                   <circle cx="12" cy="12" r="4" />
                   <path strokeLinecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
                 </svg>
               ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4.5 h-4.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
                 </svg>
               )}
@@ -137,7 +137,7 @@ export function Navbar() {
           {user ? (
             <button
               onClick={handleSignOut}
-              className="hidden md:block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="hidden md:block text-sm font-medium text-on-surface-variant hover:text-on-surface px-3 py-2 rounded-xl hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors"
             >
               {t.nav.signOut}
             </button>
@@ -145,13 +145,13 @@ export function Navbar() {
             <>
               <Link
                 href="/sign-in"
-                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="text-sm font-medium text-on-surface-variant hover:text-on-surface px-4 py-2 rounded-xl hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors"
               >
                 {t.nav.signIn}
               </Link>
               <Link
                 href="/sign-up"
-                className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-colors shadow-sm"
+                className="text-sm font-bold kinetic-gradient text-on-primary px-4 py-2 rounded-xl transition-all hover:scale-105 shadow-sm shadow-primary/20"
               >
                 {t.nav.signUp}
               </Link>

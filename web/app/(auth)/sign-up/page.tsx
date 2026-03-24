@@ -6,7 +6,6 @@ import Link from "next/link";
 import { signUp } from "@/firebase/auth";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { Card } from "@/components/Card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent } from "@/lib/analytics";
 
@@ -40,51 +39,60 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
-      <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6">{t.auth.createAccount}</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="email"
-            type="email"
-            label={t.auth.email}
-            placeholder={t.auth.emailPlaceholder}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            id="password"
-            type="password"
-            label={t.auth.password}
-            placeholder={t.auth.passwordMinHint}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Input
-            id="confirmPassword"
-            type="password"
-            label={t.auth.confirmPassword}
-            placeholder={t.auth.passwordPlaceholder}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-          <Button type="submit" className="w-full" loading={loading}>
-            {t.auth.createAccount}
-          </Button>
-        </form>
-        <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
-          {t.auth.hasAccount}{" "}
-          <Link
-            href="/sign-in"
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            {t.auth.signIn}
-          </Link>
-        </p>
-      </Card>
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase">{t.auth.createAccount}</h1>
+          <p className="text-on-surface-variant text-sm mt-2 font-medium">Join the community.</p>
+        </div>
+
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-8 border-l-4 border-primary shadow-xl">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              id="email"
+              type="email"
+              label={t.auth.email}
+              placeholder={t.auth.emailPlaceholder}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              id="password"
+              type="password"
+              label={t.auth.password}
+              placeholder={t.auth.passwordMinHint}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Input
+              id="confirmPassword"
+              type="password"
+              label={t.auth.confirmPassword}
+              placeholder={t.auth.passwordPlaceholder}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            {error && (
+              <p className="text-sm text-error flex items-center gap-1.5 font-medium">
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {error}
+              </p>
+            )}
+            <Button type="submit" className="w-full" loading={loading}>
+              {t.auth.createAccount}
+            </Button>
+          </form>
+
+          <p className="mt-6 text-sm text-center text-on-surface-variant font-medium">
+            {t.auth.hasAccount}{" "}
+            <Link href="/sign-in" className="text-primary dark:text-primary-fixed hover:underline font-bold">
+              {t.auth.signIn}
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -10,8 +10,7 @@ export const metadata: Metadata = {
 const content = {
   tr: {
     title: "Destek",
-    subtitle:
-      "Yardım mı gerekiyor? Ekibimiz size en kısa sürede yardımcı olmak için burada.",
+    subtitle: "Yardım mı gerekiyor? Ekibimiz size en kısa sürede yardımcı olmak için burada.",
     contactTitle: "Bize Ulaşın",
     contactText: "Destek ekibimize aşağıdaki kanallardan ulaşabilirsiniz:",
     email: "f.mehmetkural@gmail.com",
@@ -43,78 +42,72 @@ const content = {
   },
 };
 
-// Server Component — renders Turkish version by default (SEO friendly)
 export default function SupportPage() {
   const t = content.tr;
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Lang note for users */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 italic">
-        🌐 This page is also available in <span className="font-medium">English</span> —
-        content below is in Turkish (default).
+      <p className="text-xs text-on-surface-variant mb-4 italic font-medium">
+        🌐 This page is also available in <span className="font-bold">English</span> — content below is in Turkish (default).
       </p>
 
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{t.title}</h1>
-        <p className="text-gray-600 dark:text-gray-400">{t.subtitle}</p>
+      <header className="mb-8 pt-2">
+        <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase mb-2">{t.title}</h1>
+        <p className="text-on-surface-variant font-medium">{t.subtitle}</p>
       </header>
 
       <div className="space-y-4">
-        {/* Contact */}
-        <Card>
-          <h2 className="text-xl font-semibold mb-3">{t.contactTitle}</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-3">{t.contactText}</p>
-          <ul className="list-disc pl-5 space-y-1 text-sm">
-            <li>
-              E-posta:{" "}
-              <a
-                href={`mailto:${t.email}`}
-                className="text-blue-600 dark:text-blue-400 hover:underline"
-              >
+        <Card variant="elevated">
+          <h2 className="text-lg font-black text-on-surface uppercase tracking-tight mb-3">{t.contactTitle}</h2>
+          <p className="text-on-surface-variant mb-3 text-sm font-medium">{t.contactText}</p>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-primary">mail</span>
+              <a href={`mailto:${t.email}`} className="text-primary dark:text-primary-fixed hover:underline font-bold">
                 {t.email}
               </a>
             </li>
-            <li>
-              <span className="text-gray-700 dark:text-gray-300">{t.faqLabel}</span>
+            <li className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-secondary">help</span>
+              <span className="text-on-surface-variant font-medium">{t.faqLabel}</span>
             </li>
           </ul>
-          <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t.response}</p>
+          <p className="mt-3 text-xs text-outline-variant font-medium">{t.response}</p>
         </Card>
 
-        {/* Quick Info */}
-        <Card>
-          <h2 className="text-xl font-semibold mb-3">{t.infoTitle}</h2>
-          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-            <li>{t.version}</li>
-            <li>{t.update}</li>
+        <Card variant="elevated">
+          <h2 className="text-lg font-black text-on-surface uppercase tracking-tight mb-3">{t.infoTitle}</h2>
+          <ul className="space-y-2 text-sm text-on-surface-variant font-medium">
+            <li className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-tertiary">info</span>
+              {t.version}
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-tertiary">update</span>
+              {t.update}
+            </li>
           </ul>
         </Card>
 
-        {/* Policies */}
-        <Card>
-          <h2 className="text-xl font-semibold mb-3">{t.policyTitle}</h2>
-          <ul className="list-disc pl-5 space-y-1 text-sm">
-            <li>
-              <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
-                {t.privacyLabel}
-              </a>
+        <Card variant="elevated">
+          <h2 className="text-lg font-black text-on-surface uppercase tracking-tight mb-3">{t.policyTitle}</h2>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-primary">privacy_tip</span>
+              <a href="#" className="text-primary dark:text-primary-fixed hover:underline font-bold">{t.privacyLabel}</a>
             </li>
-            <li>
-              <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
-                {t.termsLabel}
-              </a>
+            <li className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-secondary">gavel</span>
+              <a href="#" className="text-primary dark:text-primary-fixed hover:underline font-bold">{t.termsLabel}</a>
             </li>
           </ul>
-          <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 italic">
-            {t.appstore}
-          </p>
+          <p className="mt-3 text-xs text-outline-variant italic font-medium">{t.appstore}</p>
         </Card>
       </div>
 
       <AdBanner format="horizontal" className="mt-8" />
 
-      <footer className="mt-8 text-sm text-gray-500 dark:text-gray-400">
+      <footer className="mt-8 text-xs text-outline-variant font-medium">
         <p>© {new Date().getFullYear()} EinfachVolley</p>
       </footer>
     </div>

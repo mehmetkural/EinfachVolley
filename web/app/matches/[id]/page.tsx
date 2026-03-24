@@ -45,9 +45,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           onClick={() => onChange(star)}
           className="text-2xl leading-none transition-transform hover:scale-110"
         >
-          <span className={(hover || value) >= star ? "text-amber-400" : "text-gray-300 dark:text-gray-600"}>
-            ★
-          </span>
+          <span className={(hover || value) >= star ? "text-primary-fixed-dim" : "text-outline-variant"}>★</span>
         </button>
       ))}
     </div>
@@ -112,9 +110,9 @@ export default function MatchDetailPage() {
 
   if (loading || fetching) return <Loader className="mt-20" />;
   if (!match) return (
-    <div className="text-center py-20 text-gray-500">
+    <div className="text-center py-20 text-on-surface-variant">
       {t.matchDetail.notFound}{" "}
-      <Link href="/matches" className="text-blue-600 hover:underline">{t.matchDetail.backLink}</Link>
+      <Link href="/matches" className="text-primary dark:text-primary-fixed hover:underline font-bold">{t.matchDetail.backLink}</Link>
     </div>
   );
 
@@ -172,33 +170,37 @@ export default function MatchDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
-      <Link href="/matches" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+      <Link href="/matches" className="inline-flex items-center gap-1 text-sm text-primary dark:text-primary-fixed hover:underline font-bold">
+        <span className="material-symbols-outlined text-[16px]">arrow_back</span>
         {t.matchDetail.backToMatches}
       </Link>
 
       {/* Status banners */}
       {isCancelled && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400 font-medium">
+        <div className="bg-error/10 border border-error/20 rounded-xl px-4 py-3 text-sm text-error font-bold flex items-center gap-2">
+          <span className="material-symbols-outlined text-[16px]">cancel</span>
           {t.matchDetail.cancelled}
         </div>
       )}
       {isCompleted && (
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-2">
-          <span>✓</span>
-          <span>{t.matchDetail.completed.replace("{count}", String(match.attendees?.length ?? 0))}</span>
+        <div className="bg-tertiary-container/30 border border-tertiary/20 rounded-xl px-4 py-3 text-sm text-on-tertiary-container font-bold flex items-center gap-2">
+          <span className="material-symbols-outlined text-[16px]">check_circle</span>
+          {t.matchDetail.completed.replace("{count}", String(match.attendees?.length ?? 0))}
         </div>
       )}
 
       {/* Header */}
-      <Card>
+      <Card variant="elevated">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold">{match.venueName}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {match.venueAddress}</p>
+            <h1 className="text-2xl font-black text-on-surface italic uppercase">{match.venueName}</h1>
+            <p className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 font-medium">
+              <span className="material-symbols-outlined text-[14px]">location_on</span>
+              {match.venueAddress}
+            </p>
           </div>
-          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-            isFull ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-              : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+          <span className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-black ${
+            isFull ? "bg-error/10 text-error" : "bg-tertiary-container/30 text-on-tertiary-container"
           }`}>
             {isFull
               ? t.matchDetail.full
@@ -206,20 +208,36 @@ export default function MatchDetailPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-300">
-          <div>📅 {formatDate(match.date, t.locale)}</div>
-          <div>⏱ {match.duration} {t.matchDetail.hours}</div>
-          <div>⚥ {t.gender[match.genderType as keyof typeof t.gender] ?? match.genderType}</div>
-          <div>🏐 Net: {match.netHeight}</div>
-          <div>💪 {t.matchDetail.level} {match.skillLevelMin}–{match.skillLevelMax}</div>
-          <div>💰 {match.pricePerPlayer === 0 ? t.matchDetail.free : t.matchDetail.pricePerPerson.replace("{price}", String(match.pricePerPlayer))}</div>
-          <div>👤 {t.matchDetail.organizer} {match.organizerName}</div>
-          <div>🧑‍🤝‍🧑 {t.matchDetail.players.replace("{current}", String(match.currentPlayerCount)).replace("{max}", String(match.maxPlayers))}</div>
+        <div className="grid grid-cols-2 gap-3 text-sm text-on-surface-variant font-medium">
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-primary">calendar_month</span>
+            {formatDate(match.date, t.locale)}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-secondary">timer</span>
+            {match.duration} {t.matchDetail.hours}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-tertiary">sports_volleyball</span>
+            Net: {match.netHeight}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-primary">monitoring</span>
+            {t.matchDetail.level} {match.skillLevelMin}–{match.skillLevelMax}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-secondary">payments</span>
+            {match.pricePerPlayer === 0 ? t.matchDetail.free : t.matchDetail.pricePerPerson.replace("{price}", String(match.pricePerPlayer))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px] text-tertiary">person</span>
+            {match.organizerName}
+          </div>
         </div>
 
         {match.notes && (
-          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-            📝 {match.notes}
+          <p className="mt-4 text-sm text-on-surface-variant bg-surface-container-low dark:bg-surface-container rounded-xl px-4 py-3 font-medium">
+            {match.notes}
           </p>
         )}
       </Card>
@@ -227,9 +245,13 @@ export default function MatchDetailPage() {
       {/* Actions */}
       {!isCancelled && !isCompleted && (
         <Card>
-          <h2 className="font-semibold mb-3">{t.matchDetail.actions}</h2>
-          {error && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>}
-
+          <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">{t.matchDetail.actions}</h2>
+          {error && (
+            <p className="text-sm text-error flex items-center gap-1.5 font-medium mb-3">
+              <span className="material-symbols-outlined text-[16px]">error</span>
+              {error}
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             {!isParticipant && !isFull && (
               <Button size="sm" loading={actionLoading}
@@ -250,10 +272,7 @@ export default function MatchDetailPage() {
               </Button>
             )}
             {canComplete && (
-              <Button size="sm" onClick={() => {
-                setAttendees(new Set(match.participants));
-                setShowComplete(true);
-              }}>
+              <Button size="sm" onClick={() => { setAttendees(new Set(match.participants)); setShowComplete(true); }}>
                 {t.matchDetail.completeMatch}
               </Button>
             )}
@@ -261,13 +280,11 @@ export default function MatchDetailPage() {
         </Card>
       )}
 
-      {/* Complete match panel */}
+      {/* Complete panel */}
       {showComplete && (
         <Card>
-          <h2 className="font-semibold mb-1">{t.matchDetail.completeTitle}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            {t.matchDetail.completeDesc}
-          </p>
+          <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-1">{t.matchDetail.completeTitle}</h2>
+          <p className="text-sm text-on-surface-variant mb-4 font-medium">{t.matchDetail.completeDesc}</p>
           <div className="space-y-2 mb-4">
             {match.participants.map((uid) => {
               const checked = attendees.has(uid);
@@ -283,20 +300,26 @@ export default function MatchDetailPage() {
                         return next;
                       });
                     }}
-                    className="w-4 h-4 accent-blue-600"
+                    className="w-4 h-4 accent-primary"
                   />
-                  <span className="text-sm text-gray-800 dark:text-gray-200">
+                  <span className="text-sm text-on-surface font-medium">
                     {uid === user?.uid ? t.matchDetail.you : participantNames[uid] ?? "..."}
-                    {uid === match.organizerId && <span className="ml-1 text-xs text-gray-400">{t.matchDetail.organizerTag}</span>}
+                    {uid === match.organizerId && (
+                      <span className="ml-1 text-xs text-on-surface-variant">{t.matchDetail.organizerTag}</span>
+                    )}
                   </span>
                 </label>
               );
             })}
           </div>
-          {error && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>}
+          {error && (
+            <p className="text-sm text-error flex items-center gap-1.5 font-medium mb-3">
+              <span className="material-symbols-outlined text-[16px]">error</span>
+              {error}
+            </p>
+          )}
           <div className="flex gap-2">
-            <Button size="sm" loading={completing} onClick={handleComplete}
-              disabled={attendees.size === 0}>
+            <Button size="sm" loading={completing} onClick={handleComplete} disabled={attendees.size === 0}>
               {t.matchDetail.complete.replace("{count}", String(attendees.size))}
             </Button>
             <Button size="sm" variant="secondary" onClick={() => setShowComplete(false)}>{t.matchDetail.cancel2}</Button>
@@ -307,10 +330,8 @@ export default function MatchDetailPage() {
       {/* Rating panel */}
       {isCompleted && iAttended && otherAttendees.length > 0 && (
         <Card>
-          <h2 className="font-semibold mb-1">{t.matchDetail.ratingTitle}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            {t.matchDetail.ratingDesc}
-          </p>
+          <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-1">{t.matchDetail.ratingTitle}</h2>
+          <p className="text-sm text-on-surface-variant mb-4 font-medium">{t.matchDetail.ratingDesc}</p>
           <div className="space-y-4">
             {otherAttendees.map((uid) => {
               const savedScore = myRatings[uid];
@@ -321,20 +342,13 @@ export default function MatchDetailPage() {
               return (
                 <div key={uid} className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                      {participantNames[uid] ?? "..."}
-                    </p>
-                    {isSaved && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400">{t.matchDetail.rated}</p>
-                    )}
+                    <p className="text-sm font-bold text-on-surface">{participantNames[uid] ?? "..."}</p>
+                    {isSaved && <p className="text-xs text-on-tertiary-container font-bold">{t.matchDetail.rated}</p>}
                   </div>
-                  <StarRating
-                    value={displayScore}
-                    onChange={(score) => {
-                      if (isSaved) return;
-                      setPendingRatings((prev) => ({ ...prev, [uid]: score }));
-                    }}
-                  />
+                  <StarRating value={displayScore} onChange={(score) => {
+                    if (isSaved) return;
+                    setPendingRatings((prev) => ({ ...prev, [uid]: score }));
+                  }} />
                 </div>
               );
             })}
@@ -342,7 +356,7 @@ export default function MatchDetailPage() {
 
           {Object.keys(pendingRatings).length > 0 && (
             <div className="mt-4">
-              {error && <p className="text-sm text-red-600 dark:text-red-400 mb-2">{error}</p>}
+              {error && <p className="text-sm text-error flex items-center gap-1.5 font-medium mb-2"><span className="material-symbols-outlined text-[16px]">error</span>{error}</p>}
               <Button size="sm" loading={submittingRating} onClick={handleRatingSubmit}>
                 {t.matchDetail.submitRatings}
               </Button>
@@ -350,9 +364,7 @@ export default function MatchDetailPage() {
           )}
 
           {unratedCount === 0 && Object.keys(pendingRatings).length === 0 && (
-            <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">
-              {t.matchDetail.allRated}
-            </p>
+            <p className="mt-3 text-sm text-on-tertiary-container font-bold">{t.matchDetail.allRated}</p>
           )}
         </Card>
       )}
@@ -360,14 +372,14 @@ export default function MatchDetailPage() {
       {/* Add guest */}
       {isParticipant && !isCancelled && !isCompleted && (
         <Card>
-          <h2 className="font-semibold mb-3">{t.matchDetail.addGuest}</h2>
+          <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">{t.matchDetail.addGuest}</h2>
           <div className="flex gap-2">
             <input
               type="text"
               placeholder={t.matchDetail.guestPlaceholder}
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none placeholder:text-outline-variant"
             />
             <Button size="sm" loading={actionLoading}
               disabled={!guestName.trim() || isFull}
@@ -378,12 +390,15 @@ export default function MatchDetailPage() {
 
           {myGuests.length > 0 && (
             <div className="mt-3 space-y-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t.matchDetail.myGuests}</p>
+              <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">{t.matchDetail.myGuests}</p>
               {myGuests.map((g) => (
                 <div key={g.id} className="flex items-center justify-between text-sm">
-                  <span>👤 {g.name}</span>
+                  <span className="flex items-center gap-1.5 font-medium text-on-surface">
+                    <span className="material-symbols-outlined text-[14px] text-on-surface-variant">person</span>
+                    {g.name}
+                  </span>
                   <button onClick={() => handle(() => removeGuest(match.id, user!.uid, g.id))}
-                    className="text-xs text-red-500 hover:text-red-700">
+                    className="text-xs text-error hover:underline font-bold">
                     {t.matchDetail.remove}
                   </button>
                 </div>
@@ -395,27 +410,29 @@ export default function MatchDetailPage() {
 
       {/* Participants */}
       <Card>
-        <h2 className="font-semibold mb-3">
+        <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">
           {t.matchDetail.participants.replace("{current}", String(match.currentPlayerCount)).replace("{max}", String(match.maxPlayers))}
         </h2>
-        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+        <div className="space-y-2 text-sm text-on-surface-variant">
           {match.participants.map((uid) => {
             const attended = match.attendees?.includes(uid);
             return (
               <div key={uid} className="flex items-center gap-2">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
                   uid === match.organizerId
-                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-500"
+                    ? "kinetic-gradient text-on-primary"
+                    : "bg-surface-container text-on-surface-variant"
                 }`}>
-                  {uid === match.organizerId ? "O" : "•"}
+                  {uid === match.organizerId ? "O" : "·"}
                 </span>
-                <span className="flex-1">
+                <span className="flex-1 font-medium text-on-surface">
                   {uid === user?.uid ? t.matchDetail.you : participantNames[uid] ?? "..."}
-                  {uid === match.organizerId && <span className="ml-1 text-xs text-gray-400">{t.matchDetail.organizerTag}</span>}
+                  {uid === match.organizerId && (
+                    <span className="ml-1 text-xs text-on-surface-variant">{t.matchDetail.organizerTag}</span>
+                  )}
                 </span>
                 {isCompleted && (
-                  <span className={`text-xs ${attended ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"}`}>
+                  <span className={`text-xs font-bold ${attended ? "text-on-tertiary-container" : "text-outline-variant"}`}>
                     {attended ? t.matchDetail.attended : t.matchDetail.absent}
                   </span>
                 )}
@@ -423,9 +440,9 @@ export default function MatchDetailPage() {
             );
           })}
           {Object.values(match.guests ?? {}).flat().map((g) => (
-            <div key={g.id} className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-              <span className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs">G</span>
-              <span>{g.name} {t.matchDetail.guest}</span>
+            <div key={g.id} className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-xs font-bold text-on-surface-variant">G</span>
+              <span className="font-medium">{g.name} {t.matchDetail.guest}</span>
             </div>
           ))}
         </div>

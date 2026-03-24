@@ -6,7 +6,6 @@ import Link from "next/link";
 import { signIn, signInWithGoogle, signInAsGuest } from "@/firebase/auth";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { Card } from "@/components/Card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trackEvent } from "@/lib/analytics";
 
@@ -64,84 +63,78 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
-      <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6">{t.auth.signIn}</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="email"
-            type="email"
-            label={t.auth.email}
-            placeholder={t.auth.emailPlaceholder}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            id="password"
-            type="password"
-            label={t.auth.password}
-            placeholder={t.auth.passwordPlaceholder}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-          <Button type="submit" className="w-full" loading={loading}>
-            {t.auth.signIn}
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase">{t.auth.signIn}</h1>
+          <p className="text-on-surface-variant text-sm mt-2 font-medium">Volleyball. Simplified.</p>
+        </div>
+
+        <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-8 border-l-4 border-primary shadow-xl">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              id="email"
+              type="email"
+              label={t.auth.email}
+              placeholder={t.auth.emailPlaceholder}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              id="password"
+              type="password"
+              label={t.auth.password}
+              placeholder={t.auth.passwordPlaceholder}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error && (
+              <p className="text-sm text-error flex items-center gap-1.5 font-medium">
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {error}
+              </p>
+            )}
+            <Button type="submit" className="w-full" loading={loading}>
+              {t.auth.signIn}
+            </Button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
+            <div className="flex-1 border-t border-outline-variant/30" />
+            {t.auth.or}
+            <div className="flex-1 border-t border-outline-variant/30" />
+          </div>
+
+          <Button variant="secondary" className="w-full" onClick={handleGoogle} disabled={loading}>
+            {t.auth.continueWithGoogle}
           </Button>
-        </form>
 
-        <div className="my-4 flex items-center gap-2 text-gray-400 text-sm">
-          <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-          {t.auth.or}
-          <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-        </div>
-
-        <Button
-          variant="secondary"
-          className="w-full"
-          onClick={handleGoogle}
-          disabled={loading}
-        >
-          {t.auth.continueWithGoogle}
-        </Button>
-
-        <div className="my-4 flex items-center gap-2 text-gray-400 text-sm">
-          <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-          {t.auth.or}
-          <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-        </div>
-
-        <Button
-          variant="ghost"
-          className="w-full"
-          onClick={handleGuest}
-          loading={guestLoading}
-          disabled={loading || guestLoading}
-        >
-          {t.auth.continueAsGuest}
-        </Button>
-
-        <div className="mt-4 text-sm text-center space-y-2 text-gray-600 dark:text-gray-400">
-          <div>
-            <Link
-              href="/reset-password"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              {t.auth.forgotPassword}
-            </Link>
+          <div className="my-5 flex items-center gap-3 text-on-surface-variant text-xs font-bold uppercase tracking-widest">
+            <div className="flex-1 border-t border-outline-variant/30" />
+            {t.auth.or}
+            <div className="flex-1 border-t border-outline-variant/30" />
           </div>
-          <div>
-            {t.auth.noAccount}{" "}
-            <Link
-              href="/sign-up"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              {t.auth.signUp}
-            </Link>
+
+          <Button variant="ghost" className="w-full" onClick={handleGuest} loading={guestLoading} disabled={loading || guestLoading}>
+            {t.auth.continueAsGuest}
+          </Button>
+
+          <div className="mt-6 text-sm text-center space-y-3 text-on-surface-variant">
+            <div>
+              <Link href="/reset-password" className="text-primary dark:text-primary-fixed hover:underline font-bold">
+                {t.auth.forgotPassword}
+              </Link>
+            </div>
+            <div>
+              {t.auth.noAccount}{" "}
+              <Link href="/sign-up" className="text-primary dark:text-primary-fixed hover:underline font-bold">
+                {t.auth.signUp}
+              </Link>
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

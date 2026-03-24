@@ -101,24 +101,24 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">{t.profile.title}</h1>
+      <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase pt-2">{t.profile.title}</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: t.profile.matches, value: profile?.matchesPlayed ?? 0, color: "text-blue-600 dark:text-blue-400" },
-          { label: t.profile.rating, value: profile?.rating?.toFixed(1) ?? "—", color: "text-amber-600 dark:text-amber-400" },
-          { label: t.profile.level, value: skillLabels[profile?.skillLevel as keyof typeof skillLabels ?? 0] ?? "—", color: "text-emerald-600 dark:text-emerald-400" },
+          { label: t.profile.matches, value: profile?.matchesPlayed ?? 0, color: "text-primary", bg: "bg-primary/10" },
+          { label: t.profile.rating, value: profile?.rating?.toFixed(1) ?? "—", color: "text-primary-fixed-dim", bg: "bg-primary-fixed/15" },
+          { label: t.profile.level, value: skillLabels[profile?.skillLevel as keyof typeof skillLabels ?? 0] ?? "—", color: "text-tertiary", bg: "bg-tertiary/10" },
         ].map((s) => (
-          <div key={s.label} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 text-center">
-            <div className={`text-2xl font-extrabold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</div>
+          <div key={s.label} className="bg-surface-container-lowest dark:bg-surface-container rounded-2xl p-4 text-center border border-outline-variant/10">
+            <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+            <div className="text-xs text-on-surface-variant mt-0.5 font-medium">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Form */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+      <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-6 border border-outline-variant/10">
         <form onSubmit={handleSave} className="space-y-5">
           <div>
             <Input
@@ -131,10 +131,8 @@ export default function ProfilePage() {
               required
             />
             {!nameChangeable && profile?.lastNameChangeDate && (
-              <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
-                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                </svg>
+              <p className="mt-2 text-xs text-primary-fixed-dim flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px]">warning</span>
                 {t.profile.nameChangeAvailable.replace("{date}", nextChangeDateStr(profile.lastNameChangeDate, t.locale))}
               </p>
             )}
@@ -144,17 +142,19 @@ export default function ProfilePage() {
 
           {/* Position */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.position}</label>
+            <label className="block text-xs font-bold text-secondary dark:text-outline-variant uppercase tracking-widest mb-3">
+              {t.profile.position}
+            </label>
             <div className="grid grid-cols-2 gap-2">
               {POSITIONS.map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setPosition(p)}
-                  className={`py-2 px-3 rounded-xl text-sm font-medium border transition-colors text-left ${
+                  className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all text-left active:scale-95 ${
                     position === p
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "kinetic-gradient text-on-primary shadow-sm shadow-primary/20"
+                      : "bg-surface-container-low dark:bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
                   }`}
                 >
                   {p}
@@ -165,9 +165,11 @@ export default function ProfilePage() {
 
           {/* Skill level */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t.profile.skillLevel}</label>
-              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-bold text-secondary dark:text-outline-variant uppercase tracking-widest">
+                {t.profile.skillLevel}
+              </label>
+              <span className="text-sm font-black text-primary dark:text-primary-fixed">
                 {skillLevel} — {skillLabels[skillLevel as keyof typeof skillLabels]}
               </span>
             </div>
@@ -178,9 +180,9 @@ export default function ProfilePage() {
               step={1}
               value={skillLevel}
               onChange={(e) => setSkillLevel(parseInt(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-primary"
             />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <div className="flex justify-between text-xs text-on-surface-variant mt-1 font-medium">
               <span>{skillLabels[1]}</span>
               <span>{skillLabels[3]}</span>
               <span>{skillLabels[5]}</span>
@@ -188,10 +190,8 @@ export default function ProfilePage() {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1.5">
-              <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-              </svg>
+            <p className="text-sm text-error flex items-center gap-1.5 font-medium">
+              <span className="material-symbols-outlined text-[16px]">error</span>
               {error}
             </p>
           )}
@@ -199,7 +199,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl transition-colors"
+            className="w-full kinetic-gradient disabled:opacity-60 text-on-primary font-black py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20 uppercase tracking-widest text-sm"
           >
             {saving ? t.profile.saving : saved ? t.profile.saved : t.profile.save}
           </button>
@@ -207,7 +207,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="text-center pb-2">
-        <Link href="/support" className="text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 transition-colors">
+        <Link href="/support" className="text-xs text-on-surface-variant hover:text-on-surface transition-colors font-medium">
           {t.profile.support}
         </Link>
       </div>

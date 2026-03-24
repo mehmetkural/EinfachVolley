@@ -92,30 +92,26 @@ export default function VenuesPage() {
 
   return (
     <div
-      className="-mx-4 -mt-8 -mb-16 md:-mb-0 relative overflow-hidden"
+      className="-mx-4 -mt-8 -mb-24 md:-mb-8 relative overflow-hidden"
       style={{ height: "calc(100vh - 64px)" }}
     >
-      {/* Full-screen map */}
+      {/* Map */}
       <div className="absolute inset-0">
         {venueGroups.length > 0 ? (
-          <MatchMap
-            venues={venueGroups}
-            selectedVenue={selected}
-            onVenueSelect={setSelected}
-          />
+          <MatchMap venues={venueGroups} selectedVenue={selected} onVenueSelect={setSelected} />
         ) : (
-          <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-400 flex-col gap-3">
-            <span className="text-5xl">📍</span>
-            <p>{t.venues.noVenues}</p>
+          <div className="h-full flex items-center justify-center bg-surface-container flex-col gap-3">
+            <span className="material-symbols-outlined text-[48px] text-on-surface-variant">location_off</span>
+            <p className="text-on-surface-variant font-medium">{t.venues.noVenues}</p>
           </div>
         )}
       </div>
 
       {/* Floating top bar */}
       <div className="absolute top-4 left-4 right-4 z-[1000] flex items-start justify-between gap-3 pointer-events-none">
-        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2.5 flex items-center gap-3 pointer-events-auto">
-          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{t.venues.title}</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-0.5">
+        <div className="bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2.5 flex items-center gap-3 pointer-events-auto border border-outline-variant/10">
+          <span className="text-lg font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{t.venues.title}</span>
+          <span className="text-xs text-on-surface-variant bg-surface-container rounded-full px-2 py-0.5 font-bold">
             {t.venues.summary.replace("{venues}", String(venueGroups.length)).replace("{matches}", String(totalMatches))}
           </span>
         </div>
@@ -123,14 +119,14 @@ export default function VenuesPage() {
           {isAdmin && (
             <Link
               href="/admin/venues"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-2 rounded-xl shadow-lg transition-colors"
+              className="kinetic-gradient text-on-primary text-sm font-bold px-3 py-2 rounded-xl shadow-lg hover:scale-105 transition-all"
             >
               {t.venues.addVenue}
             </Link>
           )}
           <button
             onClick={() => setListOpen((o) => !o)}
-            className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300 text-sm font-medium px-3 py-2 rounded-xl shadow-lg transition-colors"
+            className="bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm text-on-surface dark:text-inverse-on-surface text-sm font-bold px-3 py-2 rounded-xl shadow-lg transition-colors border border-outline-variant/10"
           >
             {listOpen ? t.venues.closeList : t.venues.openList}
           </button>
@@ -139,7 +135,7 @@ export default function VenuesPage() {
 
       {/* Error banner */}
       {fetchError && (
-        <div className="absolute top-20 left-4 right-4 z-[1000] bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2 text-sm text-red-700 dark:text-red-400">
+        <div className="absolute top-20 left-4 right-4 z-[1000] bg-error/10 border border-error/20 rounded-xl px-4 py-2 text-sm text-error font-medium">
           ⚠️ {fetchError}
         </div>
       )}
@@ -151,45 +147,45 @@ export default function VenuesPage() {
             <button
               key={venue.venueName}
               onClick={() => setSelected(venue.venueName)}
-              className={`w-full text-left bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-xl shadow-md p-3 transition-all border-2 ${
+              className={`w-full text-left bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-md p-3 transition-all border-2 ${
                 selected === venue.venueName
-                  ? "border-blue-500"
-                  : "border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                  ? "border-primary"
+                  : "border-transparent hover:border-outline-variant/30"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
-                    {venue.venueName}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                    📍 {venue.venueAddress}
+                  <p className="font-bold text-sm text-on-surface dark:text-inverse-on-surface truncate">{venue.venueName}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5 truncate flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[12px]">location_on</span>
+                    {venue.venueAddress}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      venue.matches.length > 0
-                        ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    venue.matches.length > 0
+                      ? "bg-primary/10 text-primary"
+                      : "bg-surface-container text-on-surface-variant"
+                  }`}>
                     {venue.matches.length > 0
                       ? t.venues.matchCount.replace("{count}", String(venue.matches.length))
                       : t.venues.noMatches}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${venue.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    venue.isPaid
+                      ? "bg-primary-fixed/20 text-primary"
+                      : "bg-tertiary-container/30 text-on-tertiary-container"
+                  }`}>
                     {venue.isPaid ? t.venues.paid : t.venues.free}
                   </span>
                 </div>
               </div>
-
               {venue.matches.slice(0, 2).map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1"
-                >
-                  <span>📅 {formatDate(m.date)}</span>
+                <div key={m.id} className="flex items-center justify-between text-xs text-on-surface-variant mt-1">
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[12px]">event</span>
+                    {formatDate(m.date)}
+                  </span>
                   <span>{t.venues.players.replace("{current}", String(m.currentPlayerCount)).replace("{max}", String(m.maxPlayers))}</span>
                 </div>
               ))}
@@ -198,22 +194,29 @@ export default function VenuesPage() {
         </div>
       )}
 
-      {/* Selected venue bottom panel */}
+      {/* Selected venue panel */}
       {selectedGroup && (
-        <div className="absolute bottom-4 right-4 z-[1000] w-72 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-xl p-4">
+        <div className="absolute bottom-4 right-4 z-[1000] w-72 bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-outline-variant/10">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-gray-100">{selectedGroup.venueName}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">📍 {selectedGroup.venueAddress}</p>
-              <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${selectedGroup.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
+              <h3 className="font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{selectedGroup.venueName}</h3>
+              <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">location_on</span>
+                {selectedGroup.venueAddress}
+              </p>
+              <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-bold ${
+                selectedGroup.isPaid
+                  ? "bg-primary-fixed/20 text-primary"
+                  : "bg-tertiary-container/30 text-on-tertiary-container"
+              }`}>
                 {selectedGroup.isPaid ? t.venues.paidVenue : t.venues.freeVenue}
               </span>
             </div>
             <button
               onClick={() => setSelected(null)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none ml-2"
+              className="text-on-surface-variant hover:text-on-surface ml-2"
             >
-              ✕
+              <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
 
@@ -223,22 +226,25 @@ export default function VenuesPage() {
                 <Link
                   key={m.id}
                   href={`/matches/${m.id}`}
-                  className="flex items-center justify-between text-xs bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg px-3 py-2 transition-colors"
+                  className="flex items-center justify-between text-xs bg-primary/5 hover:bg-primary/10 rounded-xl px-3 py-2 transition-colors"
                 >
-                  <span className="text-gray-700 dark:text-gray-300">📅 {formatDate(m.date)}</span>
-                  <span className={`font-medium ${m.currentPlayerCount >= m.maxPlayers ? "text-red-500" : "text-blue-600 dark:text-blue-400"}`}>
+                  <span className="text-on-surface-variant flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[12px]">event</span>
+                    {formatDate(m.date)}
+                  </span>
+                  <span className={`font-bold ${m.currentPlayerCount >= m.maxPlayers ? "text-error" : "text-primary"}`}>
                     {m.currentPlayerCount}/{m.maxPlayers}
                   </span>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-400 mt-2">{t.venues.noActiveMatches}</p>
+            <p className="text-xs text-on-surface-variant mt-2 font-medium">{t.venues.noActiveMatches}</p>
           )}
 
           <Link
             href="/matches/new"
-            className="block mt-3 text-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+            className="block mt-3 text-center text-xs font-black text-primary dark:text-primary-fixed hover:underline uppercase tracking-wide"
           >
             {t.venues.createHere}
           </Link>

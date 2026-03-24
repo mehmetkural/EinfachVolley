@@ -172,20 +172,20 @@ export default function AdminVenuesPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-1 rounded-full font-medium">
+      <div className="flex items-center gap-3 mb-6 pt-2">
+        <span className="text-xs bg-error/10 text-error px-3 py-1 rounded-full font-black uppercase tracking-widest">
           Admin
         </span>
-        <h1 className="text-3xl font-bold">Saha Yönetimi</h1>
+        <h1 className="text-3xl font-black text-on-surface italic uppercase tracking-tight">Saha Yönetimi</h1>
       </div>
 
       {/* Bulk import */}
-      <Card className="mb-6">
-        <h2 className="font-semibold mb-1">Toplu Import</h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <Card variant="elevated" className="mb-6">
+        <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-1">Toplu Import</h2>
+        <p className="text-xs text-on-surface-variant mb-3 font-medium">
           Aşağıdaki formatta sahalar yapıştır, otomatik parse eder. Zaten var olanları atlar.
         </p>
-        <pre className="text-xs bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-3 text-gray-500 dark:text-gray-400 overflow-x-auto">
+        <pre className="text-xs bg-surface-container-low dark:bg-surface-container rounded-xl p-3 mb-3 text-on-surface-variant overflow-x-auto font-mono">
 {`Name: Erba Park Beach
 Address: Galgenfuhr 30, 96050 Bamberg
 Latitude: 49.892300
@@ -201,10 +201,10 @@ Longitude: 10.910000`}
           onChange={(e) => setImportText(e.target.value)}
           rows={6}
           placeholder="Saha listesini buraya yapıştır..."
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3"
+          className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-3 border-none placeholder:text-outline-variant"
         />
         {importResult && (
-          <p className={`text-sm mb-3 ${importResult.startsWith("✓") ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+          <p className={`text-sm mb-3 font-bold ${importResult.startsWith("✓") ? "text-on-tertiary-container" : "text-error"}`}>
             {importResult}
           </p>
         )}
@@ -214,8 +214,8 @@ Longitude: 10.910000`}
       </Card>
 
       {/* Add venue form */}
-      <Card className="mb-6">
-        <h2 className="font-semibold mb-4">Yeni Saha Ekle</h2>
+      <Card variant="elevated" className="mb-6">
+        <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-4">Yeni Saha Ekle</h2>
         <form onSubmit={handleAdd} className="space-y-3">
           <Input
             id="name"
@@ -253,15 +253,15 @@ Longitude: 10.910000`}
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <div
               onClick={() => setForm((f) => ({ ...f, isPaid: !f.isPaid }))}
-              className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${form.isPaid ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}
+              className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${form.isPaid ? "bg-primary" : "bg-outline-variant"}`}
             >
               <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isPaid ? "translate-x-5" : "translate-x-0"}`} />
             </div>
-            <span className="text-sm text-gray-700 dark:text-gray-300">{form.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}</span>
+            <span className="text-sm text-on-surface font-medium">{form.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}</span>
           </label>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-          {success && <p className="text-sm text-green-600 dark:text-green-400">✓ {success}</p>}
+          {error && <p className="text-sm text-error font-bold">{error}</p>}
+          {success && <p className="text-sm text-on-tertiary-container font-bold">✓ {success}</p>}
 
           <Button type="submit" loading={saving}>
             Saha Ekle
@@ -270,9 +270,9 @@ Longitude: 10.910000`}
       </Card>
 
       {/* Venue list */}
-      <h2 className="font-semibold mb-3">Mevcut Sahalar ({venues.length})</h2>
+      <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">Mevcut Sahalar ({venues.length})</h2>
       {venues.length === 0 ? (
-        <Card className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <Card className="text-center py-8 text-on-surface-variant font-medium">
           Henüz saha eklenmemiş.
         </Card>
       ) : (
@@ -281,20 +281,20 @@ Longitude: 10.910000`}
             editingId === v.id ? (
               <Card key={v.id}>
                 <div className="space-y-2">
-                  <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Saha Adı" />
-                  <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.address} onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))} placeholder="Adres" />
+                  <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="Saha Adı" />
+                  <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.address} onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))} placeholder="Adres" />
                   <div className="grid grid-cols-2 gap-2">
-                    <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.latitude} onChange={(e) => setEditForm((f) => ({ ...f, latitude: e.target.value }))} placeholder="Enlem" />
-                    <input className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm" value={editForm.longitude} onChange={(e) => setEditForm((f) => ({ ...f, longitude: e.target.value }))} placeholder="Boylam" />
+                    <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.latitude} onChange={(e) => setEditForm((f) => ({ ...f, latitude: e.target.value }))} placeholder="Enlem" />
+                    <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.longitude} onChange={(e) => setEditForm((f) => ({ ...f, longitude: e.target.value }))} placeholder="Boylam" />
                   </div>
                   <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
                     <div
                       onClick={() => setEditForm((f) => ({ ...f, isPaid: !f.isPaid }))}
-                      className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${editForm.isPaid ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}
+                      className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${editForm.isPaid ? "bg-primary" : "bg-outline-variant"}`}
                     >
                       <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${editForm.isPaid ? "translate-x-5" : "translate-x-0"}`} />
                     </div>
-                    <span className="text-gray-700 dark:text-gray-300">{editForm.isPaid ? "Ücretli" : "Ücretsiz"}</span>
+                    <span className="text-on-surface font-medium">{editForm.isPaid ? "Ücretli" : "Ücretsiz"}</span>
                   </label>
                   <div className="flex gap-2 pt-1">
                     <Button size="sm" loading={editSaving} onClick={() => handleEditSave(v.id)}>Kaydet</Button>
@@ -307,19 +307,22 @@ Longitude: 10.910000`}
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{v.name}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${v.isPaid ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"}`}>
+                      <span className="font-bold text-on-surface">{v.name}</span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${v.isPaid ? "bg-primary-fixed/20 text-primary" : "bg-tertiary-container/30 text-on-tertiary-container"}`}>
                         {v.isPaid ? "Ücretli" : "Ücretsiz"}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">📍 {v.address}</div>
+                    <div className="text-sm text-on-surface-variant mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">location_on</span>
+                      {v.address}
+                    </div>
                     {(v.latitude !== 0 || v.longitude !== 0) && (
-                      <div className="text-xs text-gray-400 mt-0.5">{v.latitude}, {v.longitude}</div>
+                      <div className="text-xs text-outline-variant mt-0.5">{v.latitude}, {v.longitude}</div>
                     )}
                   </div>
-                  <div className="flex gap-2 ml-3">
-                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Düzenle</button>
-                    <button onClick={() => handleDelete(v)} className="text-xs text-red-500 hover:underline">Sil</button>
+                  <div className="flex gap-3 ml-3">
+                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
+                    <button onClick={() => handleDelete(v)} className="text-xs text-error hover:underline font-bold">Sil</button>
                   </div>
                 </div>
               </Card>

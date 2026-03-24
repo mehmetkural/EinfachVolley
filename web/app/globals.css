@@ -1,14 +1,106 @@
 @import "tailwindcss";
 
-/* Dark mode support via class strategy */
 @custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Font Families */
+  --font-headline: var(--font-lexend), "Lexend", sans-serif;
+  --font-body: var(--font-lexend), "Lexend", sans-serif;
+  --font-label: var(--font-lexend), "Lexend", sans-serif;
+
+  /* Primary */
+  --color-primary: #a63300;
+  --color-primary-fixed: #ff7949;
+  --color-primary-fixed-dim: #f7652f;
+  --color-primary-dim: #922c00;
+  --color-primary-container: #ff7949;
+  --color-on-primary: #ffefeb;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #551600;
+  --color-on-primary-container: #451000;
+  --color-inverse-primary: #fe6a34;
+
+  /* Secondary */
+  --color-secondary: #515c73;
+  --color-secondary-fixed: #d7e2ff;
+  --color-secondary-fixed-dim: #c9d4f0;
+  --color-secondary-dim: #455067;
+  --color-secondary-container: #d7e2ff;
+  --color-on-secondary: #eff2ff;
+  --color-on-secondary-fixed: #353f56;
+  --color-on-secondary-fixed-variant: #515c73;
+  --color-on-secondary-container: #475269;
+
+  /* Tertiary */
+  --color-tertiary: #853d97;
+  --color-tertiary-fixed: #ef9dff;
+  --color-tertiary-fixed-dim: #e190f1;
+  --color-tertiary-dim: #78308a;
+  --color-tertiary-container: #ef9dff;
+  --color-on-tertiary: #ffeefc;
+  --color-on-tertiary-fixed: #400050;
+  --color-on-tertiary-fixed-variant: #681f7a;
+  --color-on-tertiary-container: #5e1470;
+
+  /* Surface */
+  --color-surface: #f6f6ff;
+  --color-surface-bright: #f6f6ff;
+  --color-surface-dim: #cbd4f1;
+  --color-surface-variant: #d4dcf8;
+  --color-surface-tint: #a63300;
+  --color-surface-container: #e1e8ff;
+  --color-surface-container-low: #edf0ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #dae2fc;
+  --color-surface-container-highest: #d4dcf8;
+  --color-inverse-surface: #080e1c;
+  --color-inverse-on-surface: #979caf;
+
+  /* Background / On-Surface */
+  --color-background: #f6f6ff;
+  --color-on-background: #292e3e;
+  --color-on-surface: #292e3e;
+  --color-on-surface-variant: #555b6c;
+
+  /* Outline */
+  --color-outline: #717688;
+  --color-outline-variant: #a7adc0;
+
+  /* Error */
+  --color-error: #b31b25;
+  --color-error-dim: #9f0519;
+  --color-error-container: #fb5151;
+  --color-on-error: #ffefee;
+  --color-on-error-container: #570008;
+}
 
 @layer base {
   html {
     @apply scroll-smooth;
   }
-
   body {
-    @apply antialiased;
+    @apply antialiased bg-background text-on-surface;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #edf0ff;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #a7adc0;
+    border-radius: 10px;
+  }
+}
+
+@layer utilities {
+  .kinetic-gradient {
+    background: linear-gradient(135deg, #a63300 0%, #ff7949 100%);
+  }
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
   }
 }
