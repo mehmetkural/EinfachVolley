@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LanguageProvider>
             <AuthProvider>
               <Navbar />
-              <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">{children}</main>
+              <main className="container mx-auto px-4 pt-24 pb-24 md:pb-8">{children}</main>
               <BottomNav />
             </AuthProvider>
           </LanguageProvider>
