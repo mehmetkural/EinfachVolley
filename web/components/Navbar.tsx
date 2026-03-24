@@ -56,7 +56,7 @@ export function Navbar() {
         {/* Logo */}
         <Link
           href={user ? "/dashboard" : "/"}
-          className="text-xl font-black tracking-tighter text-primary dark:text-primary-fixed italic uppercase hover:opacity-80 transition-opacity"
+          className="text-xl font-black tracking-tighter text-primary dark:text-primary-fixed uppercase hover:opacity-80 transition-opacity [font-style:italic]"
         >
           EinfachVolley
         </Link>
