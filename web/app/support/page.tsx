@@ -1,11 +1,8 @@
-import { Metadata } from "next";
+"use client";
+
 import { Card } from "@/components/Card";
 import { AdBanner } from "@/components/AdBanner";
-
-export const metadata: Metadata = {
-  title: "Support — EinfachVolley",
-  description: "Get help and support for EinfachVolley",
-};
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const content = {
   tr: {
@@ -40,17 +37,30 @@ const content = {
     termsLabel: "Terms of Use",
     appstore: "This page can be used as the App Store Support URL.",
   },
+  de: {
+    title: "Support",
+    subtitle: "Brauchen Sie Hilfe? Unser Team ist für Sie da.",
+    contactTitle: "Kontakt",
+    contactText: "Sie können unser Support-Team über folgende Kanäle erreichen:",
+    email: "f.mehmetkural@gmail.com",
+    faqLabel: "Häufig gestellte Fragen",
+    response: "Die Antwortzeit beträgt in der Regel 1-2 Werktage.",
+    infoTitle: "Schnellinfo",
+    version: "App-Version: 1.0.0",
+    update: "Letztes Update: 8. März 2026",
+    policyTitle: "Richtlinien",
+    privacyLabel: "Datenschutzrichtlinie",
+    termsLabel: "Nutzungsbedingungen",
+    appstore: "Diese Seite kann als App Store Support-URL verwendet werden.",
+  },
 };
 
 export default function SupportPage() {
-  const t = content.tr;
+  const { locale } = useLanguage();
+  const t = content[locale] ?? content.en;
 
   return (
     <div className="max-w-3xl mx-auto">
-      <p className="text-xs text-on-surface-variant mb-4 italic font-medium">
-        🌐 This page is also available in <span className="font-bold">English</span> — content below is in Turkish (default).
-      </p>
-
       <header className="mb-8 pt-2">
         <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase mb-2">{t.title}</h1>
         <p className="text-on-surface-variant font-medium">{t.subtitle}</p>
