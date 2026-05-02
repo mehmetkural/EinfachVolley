@@ -22,6 +22,7 @@ export default function NewMatchPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(true);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   const DURATIONS = t.matchNew.durations.map((label, i) => ({
     value: ["1", "1.5", "2", "2.5", "3", "3.5", "4"][i],
@@ -136,6 +137,7 @@ export default function NewMatchPage() {
               onChange={(e) => {
                 const v = venues.find((v) => v.id === e.target.value) ?? null;
                 setSelectedVenue(v);
+                setPhotoIndex(0);
               }}
               className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none"
               required
@@ -145,10 +147,49 @@ export default function NewMatchPage() {
               ))}
             </select>
             {selectedVenue && (
-              <p className="mt-2 text-xs text-on-surface-variant font-medium flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">location_on</span>
-                {selectedVenue.address}
-              </p>
+              <>
+                {(selectedVenue.photoUrls?.length ?? 0) > 0 && (
+                  <div className="relative mt-3 w-full aspect-video rounded-xl overflow-hidden">
+                    <img
+                      src={selectedVenue.photoUrls![photoIndex]}
+                      alt={selectedVenue.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {selectedVenue.photoUrls!.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setPhotoIndex((i) => (i - 1 + selectedVenue.photoUrls!.length) % selectedVenue.photoUrls!.length)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPhotoIndex((i) => (i + 1) % selectedVenue.photoUrls!.length)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                        </button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                          {selectedVenue.photoUrls!.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setPhotoIndex(i)}
+                              className={`w-1.5 h-1.5 rounded-full transition-colors ${i === photoIndex ? "bg-white" : "bg-white/40"}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-on-surface-variant font-medium flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">location_on</span>
+                  {selectedVenue.address}
+                </p>
+              </>
             )}
           </div>
 
