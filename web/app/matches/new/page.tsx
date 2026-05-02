@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,7 +13,7 @@ import { Loader } from "@/components/Loader";
 import { trackEvent } from "@/lib/analytics";
 import type { Venue } from "@/models/venue";
 
-export default function NewMatchPage() {
+function NewMatchForm() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -316,5 +316,13 @@ export default function NewMatchPage() {
         </form>
       )}
     </div>
+  );
+}
+
+export default function NewMatchPage() {
+  return (
+    <Suspense>
+      <NewMatchForm />
+    </Suspense>
   );
 }
