@@ -17,11 +17,8 @@ import type { UserProfile } from "@/models/user";
 async function uploadPhoto(venueId: string, file: File): Promise<string> {
   const ext = file.name.split(".").pop() ?? "jpg";
   const storageRef = ref(storage, `venues/${venueId}/${Date.now()}.${ext}`);
-  const uploadPromise = uploadBytes(storageRef, file).then((snap) => getDownloadURL(snap.ref));
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("Yükleme zaman aşımına uğradı. Firebase Storage kurallarında venues/ yoluna yazma izni ver.")), 15000)
-  );
-  return Promise.race([uploadPromise, timeout]);
+  const snap = await uploadBytes(storageRef, file);
+  return getDownloadURL(snap.ref);
 }
 
 export default function AdminVenuesPage() {
@@ -38,16 +35,12 @@ export default function AdminVenuesPage() {
   const [importResult, setImportResult] = useState("");
 
   const [form, setForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
-
-  // New venue: staged photo files (uploaded after venue doc is created)
   const [newPhotoFiles, setNewPhotoFiles] = useState<{ file: File; preview: string }[]>([]);
   const newPhotoRef = useRef<HTMLInputElement>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
   const [editSaving, setEditSaving] = useState(false);
-
-  // Per-venue photo uploading state
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [uploadDoneFor, setUploadDoneFor] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -174,8 +167,7 @@ export default function AdminVenuesPage() {
       setUploadDoneFor(venueId);
       setTimeout(() => setUploadDoneFor(null), 2500);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Yüklenemedi.";
-      setUploadError(msg);
+      setUploadError(err instanceof Error ? err.message : "Yüklenemedi.");
     } finally {
       setUploadingFor(null);
       if (editPhotoRef.current) editPhotoRef.current.value = "";
@@ -238,16 +230,12 @@ Longitude: 10.910000`}
             <Input id="longitude" label="Boylam" placeholder="ör. 10.9026" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} />
           </div>
           <label className="flex items-center gap-3 cursor-pointer select-none">
-            <div
-              onClick={() => setForm((f) => ({ ...f, isPaid: !f.isPaid }))}
-              className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${form.isPaid ? "bg-primary" : "bg-outline-variant"}`}
-            >
+            <div onClick={() => setForm((f) => ({ ...f, isPaid: !f.isPaid }))} className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${form.isPaid ? "bg-primary" : "bg-outline-variant"}`}>
               <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isPaid ? "translate-x-5" : "translate-x-0"}`} />
             </div>
             <span className="text-sm text-on-surface font-medium">{form.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}</span>
           </label>
 
-          {/* New venue photos */}
           <div>
             <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraflar (İsteğe Bağlı)</p>
             {newPhotoFiles.length > 0 && (
@@ -255,21 +243,12 @@ Longitude: 10.910000`}
                 {newPhotoFiles.map((p, i) => (
                   <div key={i} className="relative aspect-video rounded-xl overflow-hidden">
                     <img src={p.preview} alt="" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setNewPhotoFiles((prev) => prev.filter((_, j) => j !== i))}
-                      className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-xs"
-                    >✕</button>
+                    <button type="button" onClick={() => setNewPhotoFiles((prev) => prev.filter((_, j) => j !== i))} className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-xs">✕</button>
                   </div>
                 ))}
               </div>
             )}
-            <input
-              ref={newPhotoRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
+            <input ref={newPhotoRef} type="file" accept="image/*" multiple className="hidden"
               onChange={(e) => {
                 const files = e.target.files;
                 if (!files) return;
@@ -278,11 +257,7 @@ Longitude: 10.910000`}
                 e.target.value = "";
               }}
             />
-            <button
-              type="button"
-              onClick={() => newPhotoRef.current?.click()}
-              className="text-sm px-4 py-2 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium"
-            >
+            <button type="button" onClick={() => newPhotoRef.current?.click()} className="text-sm px-4 py-2 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium">
               📷 Fotoğraf Ekle
             </button>
           </div>
@@ -294,12 +269,7 @@ Longitude: 10.910000`}
       </Card>
 
       {/* Hidden file input for editing existing venues */}
-      <input
-        ref={editPhotoRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
+      <input ref={editPhotoRef} type="file" accept="image/*" multiple className="hidden"
         onChange={(e) => {
           const id = uploadingVenueId.current;
           if (!id || !e.target.files?.length) return;
@@ -324,16 +294,12 @@ Longitude: 10.910000`}
                     <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.longitude} onChange={(e) => setEditForm((f) => ({ ...f, longitude: e.target.value }))} placeholder="Boylam" />
                   </div>
                   <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                    <div
-                      onClick={() => setEditForm((f) => ({ ...f, isPaid: !f.isPaid }))}
-                      className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${editForm.isPaid ? "bg-primary" : "bg-outline-variant"}`}
-                    >
+                    <div onClick={() => setEditForm((f) => ({ ...f, isPaid: !f.isPaid }))} className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${editForm.isPaid ? "bg-primary" : "bg-outline-variant"}`}>
                       <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${editForm.isPaid ? "translate-x-5" : "translate-x-0"}`} />
                     </div>
                     <span className="text-on-surface font-medium">{editForm.isPaid ? "Ücretli" : "Ücretsiz"}</span>
                   </label>
 
-                  {/* Photo management */}
                   <div>
                     <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraflar</p>
                     {(v.photoUrls?.length ?? 0) > 0 && (
@@ -341,27 +307,19 @@ Longitude: 10.910000`}
                         {v.photoUrls!.map((url, i) => (
                           <div key={i} className="relative aspect-video rounded-xl overflow-hidden group">
                             <img src={url} alt="" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePhoto(v.id, url)}
-                              className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full items-center justify-center text-xs hidden group-hover:flex"
-                            >✕</button>
+                            <button type="button" onClick={() => handleRemovePhoto(v.id, url)} className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full items-center justify-center text-xs hidden group-hover:flex">✕</button>
                           </div>
                         ))}
                       </div>
                     )}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        disabled={uploadingFor === v.id}
+                      <button type="button" disabled={uploadingFor === v.id}
                         onClick={() => { uploadingVenueId.current = v.id; setUploadError(null); editPhotoRef.current?.click(); }}
                         className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium disabled:opacity-50"
                       >
                         {uploadingFor === v.id ? "⏳ Yükleniyor..." : "📷 Fotoğraf Ekle"}
                       </button>
-                      {uploadDoneFor === v.id && (
-                        <span className="text-xs font-bold text-on-tertiary-container">✓ Kaydedildi</span>
-                      )}
+                      {uploadDoneFor === v.id && <span className="text-xs font-bold text-on-tertiary-container">✓ Kaydedildi</span>}
                     </div>
                     {uploadError && editingId === v.id && (
                       <p className="text-xs text-error font-medium mt-1 bg-error/10 rounded-lg px-3 py-2">{uploadError}</p>
@@ -402,10 +360,7 @@ Longitude: 10.910000`}
                     )}
                   </div>
                   <div className="flex gap-3 ml-3 shrink-0">
-                    <button
-                      onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }}
-                      className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold"
-                    >Düzenle</button>
+                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
                     <button onClick={() => handleDelete(v)} className="text-xs text-error hover:underline font-bold">Sil</button>
                   </div>
                 </div>
