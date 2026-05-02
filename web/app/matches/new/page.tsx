@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { collection, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
@@ -16,6 +16,7 @@ import type { Venue } from "@/models/venue";
 export default function NewMatchPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -48,10 +49,12 @@ export default function NewMatchPage() {
   });
 
   useEffect(() => {
+    const preselect = searchParams.get("venue");
     getVenues()
       .then((v) => {
         setVenues(v);
-        if (v.length > 0) setSelectedVenue(v[0]);
+        const match = preselect ? v.find((x) => x.id === preselect) ?? v[0] : v[0];
+        if (match) setSelectedVenue(match);
       })
       .finally(() => setVenuesLoading(false));
   }, []);
@@ -185,13 +188,36 @@ export default function NewMatchPage() {
                     )}
                   </div>
                 )}
-                <p className="mt-2 text-xs text-on-surface-variant font-medium flex items-center gap-1">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedVenue.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 text-xs text-primary dark:text-primary-fixed font-medium flex items-center gap-1 hover:underline w-fit"
+                >
                   <span className="material-symbols-outlined text-[14px]">location_on</span>
                   {selectedVenue.address}
-                </p>
+                </a>
+                {selectedVenue.notes && (
+                  <p className="mt-2 text-xs text-on-surface-variant bg-surface-container-low dark:bg-surface-container rounded-xl px-3 py-2 font-medium flex items-start gap-1.5">
+                    <span className="material-symbols-outlined text-[14px] shrink-0 mt-0.5">info</span>
+                    {selectedVenue.notes}
+                  </p>
+                )}
               </>
             )}
           </div>
+
+          {/* Paid venue — not available */}
+          {selectedVenue?.isPaid && (
+            <div className="rounded-2xl border-2 border-dashed border-outline-variant/40 bg-surface-container-lowest dark:bg-surface-container p-8 text-center">
+              <span className="material-symbols-outlined text-[48px] text-on-surface-variant mb-3 block">lock</span>
+              <h2 className="text-lg font-black text-on-surface uppercase tracking-tight mb-2">{t.matchNew.paidVenueTitle}</h2>
+              <p className="text-sm text-on-surface-variant font-medium max-w-xs mx-auto">{t.matchNew.paidVenueDesc}</p>
+            </div>
+          )}
+
+          {/* Rest of form — hidden for paid venues */}
+          {!selectedVenue?.isPaid && <>
 
           {/* Date & Time */}
           <div className={sectionClass}>
@@ -285,6 +311,8 @@ export default function NewMatchPage() {
             <Button type="submit" className="flex-1" loading={loading}>{t.matchNew.create}</Button>
             <Button type="button" variant="secondary" onClick={() => router.back()}>{t.matchNew.cancel}</Button>
           </div>
+
+          </> /* end !selectedVenue?.isPaid */}
         </form>
       )}
     </div>

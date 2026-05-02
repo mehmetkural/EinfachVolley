@@ -34,12 +34,12 @@ export default function AdminVenuesPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState("");
 
-  const [form, setForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
+  const [form, setForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "" });
   const [newPhotoFiles, setNewPhotoFiles] = useState<{ file: File; preview: string }[]>([]);
   const newPhotoRef = useRef<HTMLInputElement>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
+  const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "" });
   const [editSaving, setEditSaving] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [uploadDoneFor, setUploadDoneFor] = useState<string | null>(null);
@@ -117,6 +117,7 @@ export default function AdminVenuesPage() {
         latitude: parseFloat(editForm.latitude) || 0,
         longitude: parseFloat(editForm.longitude) || 0,
         isPaid: editForm.isPaid,
+        notes: editForm.notes || undefined,
       });
       setEditingId(null);
     } catch (err: unknown) {
@@ -139,6 +140,7 @@ export default function AdminVenuesPage() {
         latitude: parseFloat(form.latitude) || 0,
         longitude: parseFloat(form.longitude) || 0,
         isPaid: form.isPaid,
+        notes: form.notes || undefined,
         createdBy: user.uid,
       });
       if (newPhotoFiles.length > 0) {
@@ -146,7 +148,7 @@ export default function AdminVenuesPage() {
         await Promise.all(urls.map((url) => addVenuePhoto(id, url)));
       }
       setSuccess(`"${form.name}" eklendi.`);
-      setForm({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
+      setForm({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "" });
       setNewPhotoFiles([]);
       if (newPhotoRef.current) newPhotoRef.current.value = "";
       setTimeout(() => setSuccess(""), 3000);
@@ -237,6 +239,17 @@ Longitude: 10.910000`}
           </label>
 
           <div>
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Not (İsteğe Bağlı)</p>
+            <textarea
+              value={form.notes}
+              onChange={(e) => set("notes", e.target.value)}
+              placeholder="ör. Kendi fileni getir ve kur"
+              rows={2}
+              className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary resize-none border-none placeholder:text-outline-variant"
+            />
+          </div>
+
+          <div>
             <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraflar (İsteğe Bağlı)</p>
             {newPhotoFiles.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mb-2">
@@ -300,6 +313,14 @@ Longitude: 10.910000`}
                     <span className="text-on-surface font-medium">{editForm.isPaid ? "Ücretli" : "Ücretsiz"}</span>
                   </label>
 
+                  <textarea
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
+                    placeholder="Not (ör. Kendi fileni getir ve kur)"
+                    rows={2}
+                    className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary resize-none border-none placeholder:text-outline-variant"
+                  />
+
                   <div>
                     <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraflar</p>
                     {(v.photoUrls?.length ?? 0) > 0 && (
@@ -360,7 +381,7 @@ Longitude: 10.910000`}
                     )}
                   </div>
                   <div className="flex gap-3 ml-3 shrink-0">
-                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
+                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false, notes: v.notes ?? "" }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
                     <button onClick={() => handleDelete(v)} className="text-xs text-error hover:underline font-bold">Sil</button>
                   </div>
                 </div>

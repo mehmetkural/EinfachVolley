@@ -39,7 +39,13 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
         <div className="flex items-start justify-between mb-3">
           <div className="min-w-0 flex-1 mr-3">
             <h3 className="font-bold text-on-surface truncate">{match.venueName}</h3>
-            <p className="text-xs text-on-surface-variant mt-0.5 truncate">{match.venueAddress}</p>
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.venueAddress)}`, "_blank", "noopener,noreferrer"); }}
+              className="text-xs text-on-surface-variant mt-0.5 truncate hover:text-primary hover:underline text-left w-full"
+            >
+              {match.venueAddress}
+            </button>
           </div>
           <span
             className={`shrink-0 text-xs px-2.5 py-1 rounded-full font-bold ${

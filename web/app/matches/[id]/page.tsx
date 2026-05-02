@@ -252,10 +252,15 @@ export default function MatchDetailPage() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="text-2xl font-black text-on-surface italic uppercase">{match.venueName}</h1>
-            <p className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 font-medium">
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.venueAddress)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 font-medium hover:text-primary hover:underline w-fit"
+            >
               <span className="material-symbols-outlined text-[14px]">location_on</span>
               {match.venueAddress}
-            </p>
+            </a>
           </div>
           <span className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-black ${
             isFull ? "bg-error/10 text-error" : "bg-tertiary-container/30 text-on-tertiary-container"

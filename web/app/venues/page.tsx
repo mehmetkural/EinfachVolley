@@ -17,6 +17,7 @@ import type { UserProfile } from "@/models/user";
 const MatchMap = dynamic(() => import("@/components/MatchMap"), { ssr: false });
 
 interface VenueGroup {
+  venueId: string;
   venueName: string;
   venueAddress: string;
   latitude: number;
@@ -69,6 +70,7 @@ export default function VenuesPage() {
   }, [user, loading, router]);
 
   const venueGroups: VenueGroup[] = venues.map((v) => ({
+    venueId: v.id,
     venueName: v.name,
     venueAddress: v.address,
     latitude: v.latitude,
@@ -202,10 +204,15 @@ export default function VenuesPage() {
           <div className="flex items-start justify-between mb-2">
             <div>
               <h3 className="font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{selectedGroup.venueName}</h3>
-              <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedGroup.venueAddress)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary dark:text-primary-fixed mt-0.5 flex items-center gap-1 hover:underline w-fit"
+              >
                 <span className="material-symbols-outlined text-[12px]">location_on</span>
                 {selectedGroup.venueAddress}
-              </p>
+              </a>
               <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-bold ${
                 selectedGroup.isPaid
                   ? "bg-primary-fixed/20 text-primary"
@@ -245,7 +252,7 @@ export default function VenuesPage() {
           )}
 
           <Link
-            href="/matches/new"
+            href={`/matches/new?venue=${selectedGroup.venueId}`}
             className="block mt-3 text-center text-xs font-black text-primary dark:text-primary-fixed hover:underline uppercase tracking-wide"
           >
             {t.venues.createHere}
