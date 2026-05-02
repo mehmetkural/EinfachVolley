@@ -46,6 +46,7 @@ export default function AdminVenuesPage() {
 
   // Per-venue photo uploading state
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [uploadDoneFor, setUploadDoneFor] = useState<string | null>(null);
   const editPhotoRef = useRef<HTMLInputElement>(null);
   const uploadingVenueId = useRef<string | null>(null);
 
@@ -161,11 +162,14 @@ export default function AdminVenuesPage() {
 
   async function handleAddPhotos(venueId: string, files: FileList) {
     setUploadingFor(venueId);
+    setUploadDoneFor(null);
     try {
       const urls = await Promise.all(Array.from(files).map((f) => uploadPhoto(venueId, f)));
       await Promise.all(urls.map((url) => addVenuePhoto(venueId, url)));
+      setUploadDoneFor(venueId);
+      setTimeout(() => setUploadDoneFor(null), 2500);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Yüklenemedi.");
+      alert(err instanceof Error ? err.message : "Yüklenemedi. Firebase Storage kurallarını kontrol et.");
     } finally {
       setUploadingFor(null);
       if (editPhotoRef.current) editPhotoRef.current.value = "";
@@ -340,19 +344,26 @@ Longitude: 10.910000`}
                         ))}
                       </div>
                     )}
-                    <button
-                      type="button"
-                      disabled={uploadingFor === v.id}
-                      onClick={() => { uploadingVenueId.current = v.id; editPhotoRef.current?.click(); }}
-                      className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium disabled:opacity-50"
-                    >
-                      {uploadingFor === v.id ? "Yükleniyor..." : "📷 Fotoğraf Ekle"}
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        disabled={uploadingFor === v.id}
+                        onClick={() => { uploadingVenueId.current = v.id; editPhotoRef.current?.click(); }}
+                        className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium disabled:opacity-50"
+                      >
+                        {uploadingFor === v.id ? "⏳ Yükleniyor..." : "📷 Fotoğraf Ekle"}
+                      </button>
+                      {uploadDoneFor === v.id && (
+                        <span className="text-xs font-bold text-on-tertiary-container">✓ Fotoğraflar kaydedildi</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-2 pt-1">
-                    <Button size="sm" loading={editSaving} onClick={() => handleEditSave(v.id)}>Kaydet</Button>
-                    <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>İptal</Button>
+                    <Button size="sm" loading={editSaving} disabled={uploadingFor === v.id} onClick={() => handleEditSave(v.id)}>
+                      {uploadingFor === v.id ? "Fotoğraf yükleniyor..." : "Kaydet"}
+                    </Button>
+                    <Button size="sm" variant="secondary" disabled={uploadingFor === v.id} onClick={() => setEditingId(null)}>İptal</Button>
                   </div>
                 </div>
               </Card>
