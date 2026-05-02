@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { deleteField } from "firebase/firestore";
 import { storage } from "@/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocument } from "@/services/firestore";
@@ -117,7 +118,7 @@ export default function AdminVenuesPage() {
         latitude: parseFloat(editForm.latitude) || 0,
         longitude: parseFloat(editForm.longitude) || 0,
         isPaid: editForm.isPaid,
-        notes: editForm.notes || undefined,
+        notes: editForm.notes || (deleteField() as unknown as string),
       });
       setEditingId(null);
     } catch (err: unknown) {
@@ -140,7 +141,7 @@ export default function AdminVenuesPage() {
         latitude: parseFloat(form.latitude) || 0,
         longitude: parseFloat(form.longitude) || 0,
         isPaid: form.isPaid,
-        notes: form.notes || undefined,
+        ...(form.notes ? { notes: form.notes } : {}),
         createdBy: user.uid,
       });
       if (newPhotoFiles.length > 0) {
