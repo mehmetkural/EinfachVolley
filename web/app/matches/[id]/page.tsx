@@ -253,7 +253,7 @@ export default function MatchDetailPage() {
           <div>
             <h1 className="text-2xl font-black text-on-surface italic uppercase">{match.venueName}</h1>
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.venueAddress)}`}
+              href={`https://www.google.com/maps?q=${match.latitude},${match.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 font-medium hover:text-primary hover:underline w-fit"

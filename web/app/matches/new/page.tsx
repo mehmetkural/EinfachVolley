@@ -189,7 +189,7 @@ function NewMatchForm() {
                   </div>
                 )}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedVenue.address)}`}
+                  href={`https://www.google.com/maps?q=${selectedVenue.latitude},${selectedVenue.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 text-xs text-primary dark:text-primary-fixed font-medium flex items-center gap-1 hover:underline w-fit"

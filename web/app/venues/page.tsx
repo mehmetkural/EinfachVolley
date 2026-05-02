@@ -205,7 +205,7 @@ export default function VenuesPage() {
             <div>
               <h3 className="font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{selectedGroup.venueName}</h3>
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedGroup.venueAddress)}`}
+                href={`https://www.google.com/maps?q=${selectedGroup.latitude},${selectedGroup.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-primary dark:text-primary-fixed mt-0.5 flex items-center gap-1 hover:underline w-fit"

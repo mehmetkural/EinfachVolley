@@ -41,7 +41,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
             <h3 className="font-bold text-on-surface truncate">{match.venueName}</h3>
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.venueAddress)}`, "_blank", "noopener,noreferrer"); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.google.com/maps?q=${match.latitude},${match.longitude}`, "_blank", "noopener,noreferrer"); }}
               className="text-xs text-on-surface-variant mt-0.5 truncate hover:text-primary hover:underline text-left w-full"
             >
               {match.venueAddress}
