@@ -6,6 +6,8 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  where,
+  limit,
   doc,
   updateDoc,
   deleteDoc,
@@ -59,4 +61,12 @@ export async function updateVenue(
 /** Delete a venue (admin only) */
 export async function deleteVenue(id: string): Promise<void> {
   await deleteDoc(doc(db, "venues", id));
+}
+
+/** Get a single venue by its name */
+export async function getVenueByName(name: string): Promise<Venue | null> {
+  const q = query(collection(db, "venues"), where("name", "==", name), limit(1));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return { id: snap.docs[0].id, ...snap.docs[0].data() } as Venue;
 }

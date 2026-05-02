@@ -15,6 +15,7 @@ import {
 } from "@/services/matches";
 import { completeMatch, submitRating, getMyRatingsForMatch } from "@/services/ratings";
 import { getDocument } from "@/services/firestore";
+import { getVenueByName } from "@/services/venues";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Loader } from "@/components/Loader";
@@ -75,6 +76,9 @@ export default function MatchDetailPage() {
   const [pendingRatings, setPendingRatings] = useState<Record<string, number>>({});
   const [submittingRating, setSubmittingRating] = useState(false);
 
+  const [venuePhotoURL, setVenuePhotoURL] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   useEffect(() => {
     if (!loading && !user) { router.push("/sign-in"); return; }
     if (!user) return;
@@ -107,6 +111,13 @@ export default function MatchDetailPage() {
     if (!user || !match || match.status !== "completed") return;
     getMyRatingsForMatch(id, user.uid).then(setMyRatings);
   }, [id, user, match?.status]);
+
+  useEffect(() => {
+    if (!match) return;
+    getVenueByName(match.venueName).then((v) => {
+      if (v?.photoURL) setVenuePhotoURL(v.photoURL);
+    });
+  }, [match?.venueName]);
 
   if (loading || fetching) return <Loader className="mt-20" />;
   if (!match) return (
@@ -168,12 +179,33 @@ export default function MatchDetailPage() {
   const otherAttendees = (match.attendees ?? []).filter((uid) => uid !== user?.uid);
   const unratedCount = otherAttendees.filter((uid) => !myRatings[uid] && !pendingRatings[uid]).length;
 
+  async function handleShareLink() {
+    await navigator.clipboard.writeText(window.location.href);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-4">
-      <Link href="/matches" className="inline-flex items-center gap-1 text-sm text-primary dark:text-primary-fixed hover:underline font-bold">
-        <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-        {t.matchDetail.backToMatches}
-      </Link>
+      {venuePhotoURL && (
+        <div className="w-full aspect-video rounded-2xl overflow-hidden -mt-2">
+          <img src={venuePhotoURL} alt={match.venueName} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <Link href="/matches" className="inline-flex items-center gap-1 text-sm text-primary dark:text-primary-fixed hover:underline font-bold">
+          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+          {t.matchDetail.backToMatches}
+        </Link>
+        <button
+          onClick={handleShareLink}
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-on-surface-variant hover:text-on-surface transition-colors px-3 py-1.5 rounded-xl hover:bg-surface-container-low dark:hover:bg-surface-container"
+        >
+          <span className="material-symbols-outlined text-[16px]">{linkCopied ? "check_circle" : "share"}</span>
+          {linkCopied ? t.matchDetail.linkCopied : t.matchDetail.shareLink}
+        </button>
+      </div>
 
       {/* Status banners */}
       {isCancelled && (

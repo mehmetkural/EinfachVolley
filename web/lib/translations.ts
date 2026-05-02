@@ -125,6 +125,8 @@ export const translations = {
       errorGeneric: "Bir hata oluştu.",
       errorComplete: "Tamamlanamadı.",
       errorRating: "Puan gönderilemedi.",
+      shareLink: "Linki Kopyala",
+      linkCopied: "✓ Kopyalandı!",
     },
     venues: {
       title: "Sahalar",
@@ -354,6 +356,8 @@ export const translations = {
       errorGeneric: "An error occurred.",
       errorComplete: "Failed to complete.",
       errorRating: "Failed to submit ratings.",
+      shareLink: "Copy Link",
+      linkCopied: "✓ Copied!",
     },
     venues: {
       title: "Venues",
@@ -583,6 +587,8 @@ export const translations = {
       errorGeneric: "Ein Fehler ist aufgetreten.",
       errorComplete: "Konnte nicht abgeschlossen werden.",
       errorRating: "Bewertungen konnten nicht gesendet werden.",
+      shareLink: "Link kopieren",
+      linkCopied: "✓ Kopiert!",
     },
     venues: {
       title: "Hallen",

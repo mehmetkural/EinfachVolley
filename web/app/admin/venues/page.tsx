@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocument } from "@/services/firestore";
 import { subscribeToVenues, addVenue, updateVenue, deleteVenue } from "@/services/venues";
@@ -11,6 +13,13 @@ import { Input } from "@/components/Input";
 import { Loader } from "@/components/Loader";
 import type { Venue } from "@/models/venue";
 import type { UserProfile } from "@/models/user";
+
+async function uploadVenuePhoto(venueId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const storageRef = ref(storage, `venues/${venueId}/photo.${ext}`);
+  const snap = await uploadBytes(storageRef, file);
+  return getDownloadURL(snap.ref);
+}
 
 export default function AdminVenuesPage() {
   const { user, loading } = useAuth();
@@ -36,6 +45,14 @@ export default function AdminVenuesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
   const [editSaving, setEditSaving] = useState(false);
+
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
+  const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
+  const newPhotoRef = useRef<HTMLInputElement>(null);
+
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
+  const editPhotoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -127,14 +144,21 @@ export default function AdminVenuesPage() {
   async function handleEditSave(id: string) {
     setEditSaving(true);
     try {
-      await updateVenue(id, {
+      const updates: Parameters<typeof updateVenue>[1] = {
         name: editForm.name,
         address: editForm.address,
         latitude: parseFloat(editForm.latitude) || 0,
         longitude: parseFloat(editForm.longitude) || 0,
         isPaid: editForm.isPaid,
-      });
+      };
+      if (editPhotoFile) {
+        const url = await uploadVenuePhoto(id, editPhotoFile);
+        updates.photoURL = url;
+      }
+      await updateVenue(id, updates);
       setEditingId(null);
+      setEditPhotoFile(null);
+      setEditPhotoPreview(null);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Güncellenemedi.");
     } finally {
@@ -150,7 +174,7 @@ export default function AdminVenuesPage() {
     setSuccess("");
 
     try {
-      await addVenue({
+      const id = await addVenue({
         name: form.name,
         address: form.address,
         latitude: parseFloat(form.latitude) || 0,
@@ -158,8 +182,15 @@ export default function AdminVenuesPage() {
         isPaid: form.isPaid,
         createdBy: user.uid,
       });
+      if (newPhotoFile) {
+        const url = await uploadVenuePhoto(id, newPhotoFile);
+        await updateVenue(id, { photoURL: url });
+      }
       setSuccess(`"${form.name}" eklendi.`);
       setForm({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
+      setNewPhotoFile(null);
+      setNewPhotoPreview(null);
+      if (newPhotoRef.current) newPhotoRef.current.value = "";
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Eklenemedi.");
@@ -260,6 +291,39 @@ Longitude: 10.910000`}
             <span className="text-sm text-on-surface font-medium">{form.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}</span>
           </label>
 
+          <div>
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Saha Fotoğrafı (İsteğe Bağlı)</p>
+            {newPhotoPreview && (
+              <div className="mb-2 relative w-full aspect-video rounded-xl overflow-hidden">
+                <img src={newPhotoPreview} alt="Önizleme" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setNewPhotoFile(null); setNewPhotoPreview(null); if (newPhotoRef.current) newPhotoRef.current.value = ""; }}
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center text-xs"
+                >✕</button>
+              </div>
+            )}
+            <input
+              ref={newPhotoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setNewPhotoFile(file);
+                setNewPhotoPreview(URL.createObjectURL(file));
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => newPhotoRef.current?.click()}
+              className="text-sm px-4 py-2 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium"
+            >
+              📷 Fotoğraf Seç
+            </button>
+          </div>
+
           {error && <p className="text-sm text-error font-bold">{error}</p>}
           {success && <p className="text-sm text-on-tertiary-container font-bold">✓ {success}</p>}
 
@@ -296,9 +360,43 @@ Longitude: 10.910000`}
                     </div>
                     <span className="text-on-surface font-medium">{editForm.isPaid ? "Ücretli" : "Ücretsiz"}</span>
                   </label>
+                  <div>
+                    <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraf</p>
+                    {(editPhotoPreview ?? v.photoURL) && (
+                      <div className="mb-2 relative w-full aspect-video rounded-xl overflow-hidden">
+                        <img src={editPhotoPreview ?? v.photoURL} alt="Önizleme" className="w-full h-full object-cover" />
+                        {editPhotoPreview && (
+                          <button
+                            type="button"
+                            onClick={() => { setEditPhotoFile(null); setEditPhotoPreview(null); if (editPhotoRef.current) editPhotoRef.current.value = ""; }}
+                            className="absolute top-2 right-2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center text-xs"
+                          >✕</button>
+                        )}
+                      </div>
+                    )}
+                    <input
+                      ref={editPhotoRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setEditPhotoFile(file);
+                        setEditPhotoPreview(URL.createObjectURL(file));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editPhotoRef.current?.click()}
+                      className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium"
+                    >
+                      📷 {editPhotoPreview ? "Değiştir" : "Fotoğraf Ekle"}
+                    </button>
+                  </div>
                   <div className="flex gap-2 pt-1">
                     <Button size="sm" loading={editSaving} onClick={() => handleEditSave(v.id)}>Kaydet</Button>
-                    <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>İptal</Button>
+                    <Button size="sm" variant="secondary" onClick={() => { setEditingId(null); setEditPhotoFile(null); setEditPhotoPreview(null); }}>İptal</Button>
                   </div>
                 </div>
               </Card>
