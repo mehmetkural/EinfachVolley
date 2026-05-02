@@ -17,8 +17,11 @@ import type { UserProfile } from "@/models/user";
 async function uploadPhoto(venueId: string, file: File): Promise<string> {
   const ext = file.name.split(".").pop() ?? "jpg";
   const storageRef = ref(storage, `venues/${venueId}/${Date.now()}.${ext}`);
-  const snap = await uploadBytes(storageRef, file);
-  return getDownloadURL(snap.ref);
+  const uploadPromise = uploadBytes(storageRef, file).then((snap) => getDownloadURL(snap.ref));
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Yükleme zaman aşımına uğradı. Firebase Storage kurallarında venues/ yoluna yazma izni ver.")), 15000)
+  );
+  return Promise.race([uploadPromise, timeout]);
 }
 
 export default function AdminVenuesPage() {
@@ -47,6 +50,7 @@ export default function AdminVenuesPage() {
   // Per-venue photo uploading state
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [uploadDoneFor, setUploadDoneFor] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const editPhotoRef = useRef<HTMLInputElement>(null);
   const uploadingVenueId = useRef<string | null>(null);
 
@@ -163,13 +167,15 @@ export default function AdminVenuesPage() {
   async function handleAddPhotos(venueId: string, files: FileList) {
     setUploadingFor(venueId);
     setUploadDoneFor(null);
+    setUploadError(null);
     try {
       const urls = await Promise.all(Array.from(files).map((f) => uploadPhoto(venueId, f)));
       await Promise.all(urls.map((url) => addVenuePhoto(venueId, url)));
       setUploadDoneFor(venueId);
       setTimeout(() => setUploadDoneFor(null), 2500);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Yüklenemedi. Firebase Storage kurallarını kontrol et.");
+      const msg = err instanceof Error ? err.message : "Yüklenemedi.";
+      setUploadError(msg);
     } finally {
       setUploadingFor(null);
       if (editPhotoRef.current) editPhotoRef.current.value = "";
@@ -348,15 +354,18 @@ Longitude: 10.910000`}
                       <button
                         type="button"
                         disabled={uploadingFor === v.id}
-                        onClick={() => { uploadingVenueId.current = v.id; editPhotoRef.current?.click(); }}
+                        onClick={() => { uploadingVenueId.current = v.id; setUploadError(null); editPhotoRef.current?.click(); }}
                         className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium disabled:opacity-50"
                       >
                         {uploadingFor === v.id ? "⏳ Yükleniyor..." : "📷 Fotoğraf Ekle"}
                       </button>
                       {uploadDoneFor === v.id && (
-                        <span className="text-xs font-bold text-on-tertiary-container">✓ Fotoğraflar kaydedildi</span>
+                        <span className="text-xs font-bold text-on-tertiary-container">✓ Kaydedildi</span>
                       )}
                     </div>
+                    {uploadError && editingId === v.id && (
+                      <p className="text-xs text-error font-medium mt-1 bg-error/10 rounded-lg px-3 py-2">{uploadError}</p>
+                    )}
                   </div>
 
                   <div className="flex gap-2 pt-1">
