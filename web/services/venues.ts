@@ -11,6 +11,8 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db } from "@/firebase/client";
 import type { Venue } from "@/models/venue";
@@ -61,6 +63,16 @@ export async function updateVenue(
 /** Delete a venue (admin only) */
 export async function deleteVenue(id: string): Promise<void> {
   await deleteDoc(doc(db, "venues", id));
+}
+
+/** Add a photo URL to a venue's photoUrls array */
+export async function addVenuePhoto(id: string, url: string): Promise<void> {
+  await updateDoc(doc(db, "venues", id), { photoUrls: arrayUnion(url) });
+}
+
+/** Remove a photo URL from a venue's photoUrls array */
+export async function removeVenuePhoto(id: string, url: string): Promise<void> {
+  await updateDoc(doc(db, "venues", id), { photoUrls: arrayRemove(url) });
 }
 
 /** Get a single venue by its name */

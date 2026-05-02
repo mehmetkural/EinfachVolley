@@ -76,7 +76,8 @@ export default function MatchDetailPage() {
   const [pendingRatings, setPendingRatings] = useState<Record<string, number>>({});
   const [submittingRating, setSubmittingRating] = useState(false);
 
-  const [venuePhotoURL, setVenuePhotoURL] = useState<string | null>(null);
+  const [venuePhotos, setVenuePhotos] = useState<string[]>([]);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
@@ -115,7 +116,7 @@ export default function MatchDetailPage() {
   useEffect(() => {
     if (!match) return;
     getVenueByName(match.venueName).then((v) => {
-      if (v?.photoURL) setVenuePhotoURL(v.photoURL);
+      if (v?.photoUrls?.length) setVenuePhotos(v.photoUrls);
     });
   }, [match?.venueName]);
 
@@ -187,9 +188,34 @@ export default function MatchDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
-      {venuePhotoURL && (
-        <div className="w-full aspect-video rounded-2xl overflow-hidden -mt-2">
-          <img src={venuePhotoURL} alt={match.venueName} className="w-full h-full object-cover" />
+      {venuePhotos.length > 0 && (
+        <div className="relative w-full aspect-video rounded-2xl overflow-hidden -mt-2">
+          <img src={venuePhotos[photoIndex]} alt={match.venueName} className="w-full h-full object-cover" />
+          {venuePhotos.length > 1 && (
+            <>
+              <button
+                onClick={() => setPhotoIndex((i) => (i - 1 + venuePhotos.length) % venuePhotos.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+              <button
+                onClick={() => setPhotoIndex((i) => (i + 1) % venuePhotos.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {venuePhotos.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPhotoIndex(i)}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === photoIndex ? "bg-white" : "bg-white/40"}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

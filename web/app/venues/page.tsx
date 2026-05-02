@@ -22,7 +22,7 @@ interface VenueGroup {
   latitude: number;
   longitude: number;
   isPaid: boolean;
-  photoURL?: string;
+  photoUrls?: string[];
   matches: VolleyMatch[];
 }
 
@@ -74,7 +74,7 @@ export default function VenuesPage() {
     latitude: v.latitude,
     longitude: v.longitude,
     isPaid: v.isPaid ?? false,
-    photoURL: v.photoURL,
+    photoUrls: v.photoUrls,
     matches: matches.filter((m) => m.venueName === v.name),
   }));
 

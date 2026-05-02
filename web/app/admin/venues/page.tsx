@@ -6,7 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocument } from "@/services/firestore";
-import { subscribeToVenues, addVenue, updateVenue, deleteVenue } from "@/services/venues";
+import { subscribeToVenues, addVenue, updateVenue, deleteVenue, addVenuePhoto, removeVenuePhoto } from "@/services/venues";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -14,9 +14,9 @@ import { Loader } from "@/components/Loader";
 import type { Venue } from "@/models/venue";
 import type { UserProfile } from "@/models/user";
 
-async function uploadVenuePhoto(venueId: string, file: File): Promise<string> {
+async function uploadPhoto(venueId: string, file: File): Promise<string> {
   const ext = file.name.split(".").pop() ?? "jpg";
-  const storageRef = ref(storage, `venues/${venueId}/photo.${ext}`);
+  const storageRef = ref(storage, `venues/${venueId}/${Date.now()}.${ext}`);
   const snap = await uploadBytes(storageRef, file);
   return getDownloadURL(snap.ref);
 }
@@ -34,39 +34,26 @@ export default function AdminVenuesPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState("");
 
-  const [form, setForm] = useState({
-    name: "",
-    address: "",
-    latitude: "",
-    longitude: "",
-    isPaid: false,
-  });
+  const [form, setForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
+
+  // New venue: staged photo files (uploaded after venue doc is created)
+  const [newPhotoFiles, setNewPhotoFiles] = useState<{ file: File; preview: string }[]>([]);
+  const newPhotoRef = useRef<HTMLInputElement>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
   const [editSaving, setEditSaving] = useState(false);
 
-  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
-  const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
-  const newPhotoRef = useRef<HTMLInputElement>(null);
-
-  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
-  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
+  // Per-venue photo uploading state
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const editPhotoRef = useRef<HTMLInputElement>(null);
+  const uploadingVenueId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/sign-in");
-      return;
-    }
+    if (!loading && !user) { router.push("/sign-in"); return; }
     if (!user) return;
-
-    // Check admin status
     getDocument<UserProfile>("users", user.uid).then((profile) => {
-      if (!profile?.isAdmin) {
-        router.push("/");
-        return;
-      }
+      if (!profile?.isAdmin) { router.push("/"); return; }
       setIsAdmin(true);
       setChecking(false);
     });
@@ -81,7 +68,6 @@ export default function AdminVenuesPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  // Parse the txt format: Name/Address/Latitude/Longitude blocks separated by ---
   function parseVenueText(text: string) {
     return text
       .split("---")
@@ -90,17 +76,10 @@ export default function AdminVenuesPage() {
         block.trim().split("\n").forEach((line) => {
           const idx = line.indexOf(":");
           if (idx === -1) return;
-          const key = line.slice(0, idx).trim().toLowerCase();
-          const val = line.slice(idx + 1).trim();
-          lines[key] = val;
+          lines[line.slice(0, idx).trim().toLowerCase()] = line.slice(idx + 1).trim();
         });
         if (!lines["name"] || !lines["address"]) return null;
-        return {
-          name: lines["name"],
-          address: lines["address"],
-          latitude: parseFloat(lines["latitude"]) || 0,
-          longitude: parseFloat(lines["longitude"]) || 0,
-        };
+        return { name: lines["name"], address: lines["address"], latitude: parseFloat(lines["latitude"]) || 0, longitude: parseFloat(lines["longitude"]) || 0 };
       })
       .filter(Boolean) as { name: string; address: string; latitude: number; longitude: number }[];
   }
@@ -110,20 +89,13 @@ export default function AdminVenuesPage() {
     setImporting(true);
     setImportResult("");
     const parsed = parseVenueText(importText);
-    if (parsed.length === 0) {
-      setImportResult("❌ Geçerli saha bulunamadı. Formatı kontrol et.");
-      setImporting(false);
-      return;
-    }
-    // Skip venues that already exist (by name)
+    if (parsed.length === 0) { setImportResult("❌ Geçerli saha bulunamadı."); setImporting(false); return; }
     const existingNames = new Set(venues.map((v) => v.name.toLowerCase()));
     const toAdd = parsed.filter((v) => !existingNames.has(v.name.toLowerCase()));
     try {
       await Promise.all(toAdd.map((v) => addVenue({ ...v, createdBy: user.uid })));
       const skipped = parsed.length - toAdd.length;
-      setImportResult(
-        `✓ ${toAdd.length} saha eklendi${skipped > 0 ? `, ${skipped} zaten vardı` : ""}.`
-      );
+      setImportResult(`✓ ${toAdd.length} saha eklendi${skipped > 0 ? `, ${skipped} zaten vardı` : ""}.`);
       setImportText("");
     } catch (err: unknown) {
       setImportResult(`❌ ${err instanceof Error ? err.message : "Hata oluştu."}`);
@@ -134,31 +106,21 @@ export default function AdminVenuesPage() {
 
   async function handleDelete(v: Venue) {
     if (!confirm(`"${v.name}" silinsin mi?`)) return;
-    try {
-      await deleteVenue(v.id);
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Silinemedi.");
-    }
+    try { await deleteVenue(v.id); }
+    catch (err: unknown) { alert(err instanceof Error ? err.message : "Silinemedi."); }
   }
 
   async function handleEditSave(id: string) {
     setEditSaving(true);
     try {
-      const updates: Parameters<typeof updateVenue>[1] = {
+      await updateVenue(id, {
         name: editForm.name,
         address: editForm.address,
         latitude: parseFloat(editForm.latitude) || 0,
         longitude: parseFloat(editForm.longitude) || 0,
         isPaid: editForm.isPaid,
-      };
-      if (editPhotoFile) {
-        const url = await uploadVenuePhoto(id, editPhotoFile);
-        updates.photoURL = url;
-      }
-      await updateVenue(id, updates);
+      });
       setEditingId(null);
-      setEditPhotoFile(null);
-      setEditPhotoPreview(null);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Güncellenemedi.");
     } finally {
@@ -172,7 +134,6 @@ export default function AdminVenuesPage() {
     setSaving(true);
     setError("");
     setSuccess("");
-
     try {
       const id = await addVenue({
         name: form.name,
@@ -182,14 +143,13 @@ export default function AdminVenuesPage() {
         isPaid: form.isPaid,
         createdBy: user.uid,
       });
-      if (newPhotoFile) {
-        const url = await uploadVenuePhoto(id, newPhotoFile);
-        await updateVenue(id, { photoURL: url });
+      if (newPhotoFiles.length > 0) {
+        const urls = await Promise.all(newPhotoFiles.map((p) => uploadPhoto(id, p.file)));
+        await Promise.all(urls.map((url) => addVenuePhoto(id, url)));
       }
       setSuccess(`"${form.name}" eklendi.`);
       setForm({ name: "", address: "", latitude: "", longitude: "", isPaid: false });
-      setNewPhotoFile(null);
-      setNewPhotoPreview(null);
+      setNewPhotoFiles([]);
       if (newPhotoRef.current) newPhotoRef.current.value = "";
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: unknown) {
@@ -199,14 +159,31 @@ export default function AdminVenuesPage() {
     }
   }
 
+  async function handleAddPhotos(venueId: string, files: FileList) {
+    setUploadingFor(venueId);
+    try {
+      const urls = await Promise.all(Array.from(files).map((f) => uploadPhoto(venueId, f)));
+      await Promise.all(urls.map((url) => addVenuePhoto(venueId, url)));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Yüklenemedi.");
+    } finally {
+      setUploadingFor(null);
+      if (editPhotoRef.current) editPhotoRef.current.value = "";
+    }
+  }
+
+  async function handleRemovePhoto(venueId: string, url: string) {
+    if (!confirm("Bu fotoğraf silinsin mi?")) return;
+    try { await removeVenuePhoto(venueId, url); }
+    catch (err: unknown) { alert(err instanceof Error ? err.message : "Silinemedi."); }
+  }
+
   if (loading || checking) return <Loader className="mt-20" />;
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-6 pt-2">
-        <span className="text-xs bg-error/10 text-error px-3 py-1 rounded-full font-black uppercase tracking-widest">
-          Admin
-        </span>
+        <span className="text-xs bg-error/10 text-error px-3 py-1 rounded-full font-black uppercase tracking-widest">Admin</span>
         <h1 className="text-3xl font-black text-on-surface italic uppercase tracking-tight">Saha Yönetimi</h1>
       </div>
 
@@ -235,52 +212,21 @@ Longitude: 10.910000`}
           className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-3 border-none placeholder:text-outline-variant"
         />
         {importResult && (
-          <p className={`text-sm mb-3 font-bold ${importResult.startsWith("✓") ? "text-on-tertiary-container" : "text-error"}`}>
-            {importResult}
-          </p>
+          <p className={`text-sm mb-3 font-bold ${importResult.startsWith("✓") ? "text-on-tertiary-container" : "text-error"}`}>{importResult}</p>
         )}
-        <Button size="sm" loading={importing} onClick={handleImport} disabled={!importText.trim()}>
-          İçe Aktar
-        </Button>
+        <Button size="sm" loading={importing} onClick={handleImport} disabled={!importText.trim()}>İçe Aktar</Button>
       </Card>
 
       {/* Add venue form */}
       <Card variant="elevated" className="mb-6">
         <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-4">Yeni Saha Ekle</h2>
         <form onSubmit={handleAdd} className="space-y-3">
-          <Input
-            id="name"
-            label="Saha Adı"
-            placeholder="ör. Erba Park Beach"
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            required
-          />
-          <Input
-            id="address"
-            label="Adres"
-            placeholder="ör. Galgenfuhr 30, 96050 Bamberg"
-            value={form.address}
-            onChange={(e) => set("address", e.target.value)}
-            required
-          />
+          <Input id="name" label="Saha Adı" placeholder="ör. Erba Park Beach" value={form.name} onChange={(e) => set("name", e.target.value)} required />
+          <Input id="address" label="Adres" placeholder="ör. Galgenfuhr 30, 96050 Bamberg" value={form.address} onChange={(e) => set("address", e.target.value)} required />
           <div className="grid grid-cols-2 gap-3">
-            <Input
-              id="latitude"
-              label="Enlem"
-              placeholder="ör. 49.8923"
-              value={form.latitude}
-              onChange={(e) => set("latitude", e.target.value)}
-            />
-            <Input
-              id="longitude"
-              label="Boylam"
-              placeholder="ör. 10.9026"
-              value={form.longitude}
-              onChange={(e) => set("longitude", e.target.value)}
-            />
+            <Input id="latitude" label="Enlem" placeholder="ör. 49.8923" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} />
+            <Input id="longitude" label="Boylam" placeholder="ör. 10.9026" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} />
           </div>
-
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <div
               onClick={() => setForm((f) => ({ ...f, isPaid: !f.isPaid }))}
@@ -291,28 +237,35 @@ Longitude: 10.910000`}
             <span className="text-sm text-on-surface font-medium">{form.isPaid ? "Ücretli Saha" : "Ücretsiz Saha"}</span>
           </label>
 
+          {/* New venue photos */}
           <div>
-            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Saha Fotoğrafı (İsteğe Bağlı)</p>
-            {newPhotoPreview && (
-              <div className="mb-2 relative w-full aspect-video rounded-xl overflow-hidden">
-                <img src={newPhotoPreview} alt="Önizleme" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => { setNewPhotoFile(null); setNewPhotoPreview(null); if (newPhotoRef.current) newPhotoRef.current.value = ""; }}
-                  className="absolute top-2 right-2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center text-xs"
-                >✕</button>
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraflar (İsteğe Bağlı)</p>
+            {newPhotoFiles.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {newPhotoFiles.map((p, i) => (
+                  <div key={i} className="relative aspect-video rounded-xl overflow-hidden">
+                    <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setNewPhotoFiles((prev) => prev.filter((_, j) => j !== i))}
+                      className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-xs"
+                    >✕</button>
+                  </div>
+                ))}
               </div>
             )}
             <input
               ref={newPhotoRef}
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                setNewPhotoFile(file);
-                setNewPhotoPreview(URL.createObjectURL(file));
+                const files = e.target.files;
+                if (!files) return;
+                const added = Array.from(files).map((file) => ({ file, preview: URL.createObjectURL(file) }));
+                setNewPhotoFiles((prev) => [...prev, ...added]);
+                e.target.value = "";
               }}
             />
             <button
@@ -320,25 +273,34 @@ Longitude: 10.910000`}
               onClick={() => newPhotoRef.current?.click()}
               className="text-sm px-4 py-2 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium"
             >
-              📷 Fotoğraf Seç
+              📷 Fotoğraf Ekle
             </button>
           </div>
 
           {error && <p className="text-sm text-error font-bold">{error}</p>}
           {success && <p className="text-sm text-on-tertiary-container font-bold">✓ {success}</p>}
-
-          <Button type="submit" loading={saving}>
-            Saha Ekle
-          </Button>
+          <Button type="submit" loading={saving}>Saha Ekle</Button>
         </form>
       </Card>
+
+      {/* Hidden file input for editing existing venues */}
+      <input
+        ref={editPhotoRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const id = uploadingVenueId.current;
+          if (!id || !e.target.files?.length) return;
+          handleAddPhotos(id, e.target.files);
+        }}
+      />
 
       {/* Venue list */}
       <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">Mevcut Sahalar ({venues.length})</h2>
       {venues.length === 0 ? (
-        <Card className="text-center py-8 text-on-surface-variant font-medium">
-          Henüz saha eklenmemiş.
-        </Card>
+        <Card className="text-center py-8 text-on-surface-variant font-medium">Henüz saha eklenmemiş.</Card>
       ) : (
         <div className="space-y-3">
           {venues.map((v) =>
@@ -360,50 +322,44 @@ Longitude: 10.910000`}
                     </div>
                     <span className="text-on-surface font-medium">{editForm.isPaid ? "Ücretli" : "Ücretsiz"}</span>
                   </label>
+
+                  {/* Photo management */}
                   <div>
-                    <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraf</p>
-                    {(editPhotoPreview ?? v.photoURL) && (
-                      <div className="mb-2 relative w-full aspect-video rounded-xl overflow-hidden">
-                        <img src={editPhotoPreview ?? v.photoURL} alt="Önizleme" className="w-full h-full object-cover" />
-                        {editPhotoPreview && (
-                          <button
-                            type="button"
-                            onClick={() => { setEditPhotoFile(null); setEditPhotoPreview(null); if (editPhotoRef.current) editPhotoRef.current.value = ""; }}
-                            className="absolute top-2 right-2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center text-xs"
-                          >✕</button>
-                        )}
+                    <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Fotoğraflar</p>
+                    {(v.photoUrls?.length ?? 0) > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        {v.photoUrls!.map((url, i) => (
+                          <div key={i} className="relative aspect-video rounded-xl overflow-hidden group">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(v.id, url)}
+                              className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full items-center justify-center text-xs hidden group-hover:flex"
+                            >✕</button>
+                          </div>
+                        ))}
                       </div>
                     )}
-                    <input
-                      ref={editPhotoRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setEditPhotoFile(file);
-                        setEditPhotoPreview(URL.createObjectURL(file));
-                      }}
-                    />
                     <button
                       type="button"
-                      onClick={() => editPhotoRef.current?.click()}
-                      className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium"
+                      disabled={uploadingFor === v.id}
+                      onClick={() => { uploadingVenueId.current = v.id; editPhotoRef.current?.click(); }}
+                      className="text-sm px-3 py-1.5 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium disabled:opacity-50"
                     >
-                      📷 {editPhotoPreview ? "Değiştir" : "Fotoğraf Ekle"}
+                      {uploadingFor === v.id ? "Yükleniyor..." : "📷 Fotoğraf Ekle"}
                     </button>
                   </div>
+
                   <div className="flex gap-2 pt-1">
                     <Button size="sm" loading={editSaving} onClick={() => handleEditSave(v.id)}>Kaydet</Button>
-                    <Button size="sm" variant="secondary" onClick={() => { setEditingId(null); setEditPhotoFile(null); setEditPhotoPreview(null); }}>İptal</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>İptal</Button>
                   </div>
                 </div>
               </Card>
             ) : (
               <Card key={v.id}>
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-on-surface">{v.name}</span>
                       <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${v.isPaid ? "bg-primary-fixed/20 text-primary" : "bg-tertiary-container/30 text-on-tertiary-container"}`}>
@@ -417,9 +373,19 @@ Longitude: 10.910000`}
                     {(v.latitude !== 0 || v.longitude !== 0) && (
                       <div className="text-xs text-outline-variant mt-0.5">{v.latitude}, {v.longitude}</div>
                     )}
+                    {(v.photoUrls?.length ?? 0) > 0 && (
+                      <div className="flex gap-1.5 mt-2 overflow-x-auto">
+                        {v.photoUrls!.map((url, i) => (
+                          <img key={i} src={url} alt="" className="w-16 h-10 rounded-lg object-cover shrink-0" />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-3 ml-3">
-                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
+                  <div className="flex gap-3 ml-3 shrink-0">
+                    <button
+                      onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false }); }}
+                      className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold"
+                    >Düzenle</button>
                     <button onClick={() => handleDelete(v)} className="text-xs text-error hover:underline font-bold">Sil</button>
                   </div>
                 </div>

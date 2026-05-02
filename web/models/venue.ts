@@ -5,7 +5,7 @@ export interface Venue {
   latitude: number;
   longitude: number;
   isPaid?: boolean;
-  photoURL?: string;
+  photoUrls?: string[];
   createdBy: string;
   createdAt: import("firebase/firestore").Timestamp;
 }

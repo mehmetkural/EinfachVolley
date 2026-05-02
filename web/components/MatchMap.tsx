@@ -10,7 +10,7 @@ interface VenueGroup {
   latitude: number;
   longitude: number;
   isPaid: boolean;
-  photoURL?: string;
+  photoUrls?: string[];
   matches: { id: string; currentPlayerCount: number; maxPlayers: number; date: { toDate: () => Date } }[];
 }
 
@@ -68,8 +68,9 @@ function makePopupHtml(venue: VenueGroup): string {
       ? `<div style="font-size:12px;color:#999;margin-top:4px">Aktif maç yok</div>`
       : "";
 
-  const photo = venue.photoURL
-    ? `<img src="${venue.photoURL}" alt="${venue.venueName}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;display:block">`
+  const firstPhoto = venue.photoUrls?.[0];
+  const photo = firstPhoto
+    ? `<img src="${firstPhoto}" alt="${venue.venueName}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;display:block">`
     : "";
 
   return `
