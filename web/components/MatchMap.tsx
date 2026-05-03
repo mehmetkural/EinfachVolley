@@ -91,10 +91,15 @@ export default function MatchMap({ venues, selectedVenue, onVenueSelect }: Match
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const center: [number, number] =
-      venues.length > 0 ? [venues[0].latitude, venues[0].longitude] : [49.8988, 10.9028];
+    const bamberg: [number, number] = [49.8988, 10.9028];
+    const bounds = L.latLngBounds(L.latLng(49.78, 10.78), L.latLng(49.99, 11.10));
 
-    const map = L.map(containerRef.current, { zoomControl: false }).setView(center, 13);
+    const map = L.map(containerRef.current, {
+      zoomControl: false,
+      maxBounds: bounds,
+      maxBoundsViscosity: 0.9,
+      minZoom: 11,
+    }).setView(bamberg, 13);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap",

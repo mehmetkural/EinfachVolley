@@ -1,3 +1,5 @@
+export type VenueType = "beach" | "outdoor" | "indoor";
+
 export interface Venue {
   id: string;
   name: string;
@@ -5,6 +7,7 @@ export interface Venue {
   latitude: number;
   longitude: number;
   isPaid?: boolean;
+  type?: VenueType;
   photoUrls?: string[];
   notes?: string;
   createdBy: string;

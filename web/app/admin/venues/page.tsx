@@ -8,6 +8,7 @@ import { storage } from "@/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getDocument } from "@/services/firestore";
 import { subscribeToVenues, addVenue, updateVenue, deleteVenue, addVenuePhoto, removeVenuePhoto } from "@/services/venues";
+import type { VenueType } from "@/models/venue";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -35,12 +36,12 @@ export default function AdminVenuesPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState("");
 
-  const [form, setForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "" });
+  const [form, setForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "", type: "outdoor" as VenueType });
   const [newPhotoFiles, setNewPhotoFiles] = useState<{ file: File; preview: string }[]>([]);
   const newPhotoRef = useRef<HTMLInputElement>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "" });
+  const [editForm, setEditForm] = useState({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "", type: "outdoor" as VenueType });
   const [editSaving, setEditSaving] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [uploadDoneFor, setUploadDoneFor] = useState<string | null>(null);
@@ -118,6 +119,7 @@ export default function AdminVenuesPage() {
         latitude: parseFloat(editForm.latitude) || 0,
         longitude: parseFloat(editForm.longitude) || 0,
         isPaid: editForm.isPaid,
+        type: editForm.type,
         notes: editForm.notes || (deleteField() as unknown as string),
       });
       setEditingId(null);
@@ -141,6 +143,7 @@ export default function AdminVenuesPage() {
         latitude: parseFloat(form.latitude) || 0,
         longitude: parseFloat(form.longitude) || 0,
         isPaid: form.isPaid,
+        type: form.type,
         ...(form.notes ? { notes: form.notes } : {}),
         createdBy: user.uid,
       });
@@ -149,7 +152,7 @@ export default function AdminVenuesPage() {
         await Promise.all(urls.map((url) => addVenuePhoto(id, url)));
       }
       setSuccess(`"${form.name}" eklendi.`);
-      setForm({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "" });
+      setForm({ name: "", address: "", latitude: "", longitude: "", isPaid: false, notes: "", type: "outdoor" });
       setNewPhotoFiles([]);
       if (newPhotoRef.current) newPhotoRef.current.value = "";
       setTimeout(() => setSuccess(""), 3000);
@@ -232,6 +235,18 @@ Longitude: 10.910000`}
             <Input id="latitude" label="Enlem" placeholder="ör. 49.8923" value={form.latitude} onChange={(e) => set("latitude", e.target.value)} />
             <Input id="longitude" label="Boylam" placeholder="ör. 10.9026" value={form.longitude} onChange={(e) => set("longitude", e.target.value)} />
           </div>
+          <div>
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Saha Tipi</p>
+            <div className="flex gap-2">
+              {(["beach", "outdoor", "indoor"] as VenueType[]).map((t) => (
+                <button key={t} type="button" onClick={() => setForm((f) => ({ ...f, type: t }))}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${form.type === t ? "kinetic-gradient text-on-primary" : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high"}`}>
+                  {t === "beach" ? "Beach" : t === "outdoor" ? "Açık Saha" : "Kapalı Saha"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <div onClick={() => setForm((f) => ({ ...f, isPaid: !f.isPaid }))} className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${form.isPaid ? "bg-primary" : "bg-outline-variant"}`}>
               <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${form.isPaid ? "translate-x-5" : "translate-x-0"}`} />
@@ -307,6 +322,18 @@ Longitude: 10.910000`}
                     <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.latitude} onChange={(e) => setEditForm((f) => ({ ...f, latitude: e.target.value }))} placeholder="Enlem" />
                     <input className="w-full px-4 py-3 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none" value={editForm.longitude} onChange={(e) => setEditForm((f) => ({ ...f, longitude: e.target.value }))} placeholder="Boylam" />
                   </div>
+                  <div>
+                    <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">Saha Tipi</p>
+                    <div className="flex gap-2">
+                      {(["beach", "outdoor", "indoor"] as VenueType[]).map((vt) => (
+                        <button key={vt} type="button" onClick={() => setEditForm((f) => ({ ...f, type: vt }))}
+                          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${editForm.type === vt ? "kinetic-gradient text-on-primary" : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high"}`}>
+                          {vt === "beach" ? "Beach" : vt === "outdoor" ? "Açık Saha" : "Kapalı Saha"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
                     <div onClick={() => setEditForm((f) => ({ ...f, isPaid: !f.isPaid }))} className={`w-10 h-5 rounded-full transition-colors flex items-center px-0.5 ${editForm.isPaid ? "bg-primary" : "bg-outline-variant"}`}>
                       <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${editForm.isPaid ? "translate-x-5" : "translate-x-0"}`} />
@@ -382,7 +409,7 @@ Longitude: 10.910000`}
                     )}
                   </div>
                   <div className="flex gap-3 ml-3 shrink-0">
-                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false, notes: v.notes ?? "" }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
+                    <button onClick={() => { setEditingId(v.id); setEditForm({ name: v.name, address: v.address, latitude: String(v.latitude), longitude: String(v.longitude), isPaid: v.isPaid ?? false, notes: v.notes ?? "", type: v.type ?? "outdoor" }); }} className="text-xs text-primary dark:text-primary-fixed hover:underline font-bold">Düzenle</button>
                     <button onClick={() => handleDelete(v)} className="text-xs text-error hover:underline font-bold">Sil</button>
                   </div>
                 </div>

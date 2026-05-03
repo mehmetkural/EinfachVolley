@@ -159,6 +159,10 @@ export const translations = {
       createHere: "+ Bu sahada maç oluştur",
       firestoreError: "Firestore bağlantısı kurulamadı.",
       players: "{current}/{max} oyuncu",
+      filterAll: "Tümü",
+      filterBeach: "Beach",
+      filterOutdoor: "Açık Saha",
+      filterIndoor: "Kapalı Saha",
     },
     profile: {
       title: "Profil",
@@ -404,6 +408,10 @@ export const translations = {
       createHere: "+ Create match at this venue",
       firestoreError: "Could not connect to Firestore.",
       players: "{current}/{max} players",
+      filterAll: "All",
+      filterBeach: "Beach",
+      filterOutdoor: "Outdoor",
+      filterIndoor: "Indoor",
     },
     profile: {
       title: "Profile",
@@ -649,6 +657,10 @@ export const translations = {
       createHere: "+ Spiel in dieser Halle erstellen",
       firestoreError: "Verbindung zu Firestore fehlgeschlagen.",
       players: "{current}/{max} Spieler",
+      filterAll: "Alle",
+      filterBeach: "Beach",
+      filterOutdoor: "Freiplatz",
+      filterIndoor: "Halle",
     },
     profile: {
       title: "Profil",

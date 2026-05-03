@@ -11,7 +11,7 @@ import { subscribeToActiveMatches } from "@/services/matches";
 import { subscribeToVenues } from "@/services/venues";
 import { Loader } from "@/components/Loader";
 import type { VolleyMatch } from "@/models/match";
-import type { Venue } from "@/models/venue";
+import type { Venue, VenueType } from "@/models/venue";
 import type { UserProfile } from "@/models/user";
 
 const MatchMap = dynamic(() => import("@/components/MatchMap"), { ssr: false });
@@ -23,6 +23,7 @@ interface VenueGroup {
   latitude: number;
   longitude: number;
   isPaid: boolean;
+  type?: VenueType;
   photoUrls?: string[];
   matches: VolleyMatch[];
 }
@@ -38,6 +39,7 @@ export default function VenuesPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [listOpen, setListOpen] = useState(true);
+  const [typeFilter, setTypeFilter] = useState<VenueType | "all">("all");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -69,16 +71,21 @@ export default function VenuesPage() {
     };
   }, [user, loading, router]);
 
-  const venueGroups: VenueGroup[] = venues.map((v) => ({
+  const allVenueGroups: VenueGroup[] = venues.map((v) => ({
     venueId: v.id,
     venueName: v.name,
     venueAddress: v.address,
     latitude: v.latitude,
     longitude: v.longitude,
     isPaid: v.isPaid ?? false,
+    type: v.type,
     photoUrls: v.photoUrls,
     matches: matches.filter((m) => m.venueName === v.name),
   }));
+
+  const venueGroups = typeFilter === "all"
+    ? allVenueGroups
+    : allVenueGroups.filter((v) => v.type === typeFilter);
 
   const totalMatches = venueGroups.reduce((a, v) => a + v.matches.length, 0);
   const selectedGroup = venueGroups.find((v) => v.venueName === selected) ?? null;
@@ -112,34 +119,57 @@ export default function VenuesPage() {
       </div>
 
       {/* Floating top bar */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex items-start justify-between gap-3 pointer-events-none">
-        <div className="bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2.5 flex items-center gap-3 pointer-events-auto border border-outline-variant/10">
-          <span className="text-lg font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{t.venues.title}</span>
-          <span className="text-xs text-on-surface-variant bg-surface-container rounded-full px-2 py-0.5 font-bold">
-            {t.venues.summary.replace("{venues}", String(venueGroups.length)).replace("{matches}", String(totalMatches))}
-          </span>
-        </div>
-        <div className="flex gap-2 pointer-events-auto">
-          {isAdmin && (
-            <Link
-              href="/admin/venues"
-              className="kinetic-gradient text-on-primary text-sm font-bold px-3 py-2 rounded-xl shadow-lg hover:scale-105 transition-all"
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-2 pointer-events-none">
+        <div className="flex items-start justify-between gap-3">
+          <div className="bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-lg px-4 py-2.5 flex items-center gap-3 pointer-events-auto border border-outline-variant/10">
+            <span className="text-lg font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{t.venues.title}</span>
+            <span className="text-xs text-on-surface-variant bg-surface-container rounded-full px-2 py-0.5 font-bold">
+              {t.venues.summary.replace("{venues}", String(venueGroups.length)).replace("{matches}", String(totalMatches))}
+            </span>
+          </div>
+          <div className="flex gap-2 pointer-events-auto">
+            {isAdmin && (
+              <Link
+                href="/admin/venues"
+                className="kinetic-gradient text-on-primary text-sm font-bold px-3 py-2 rounded-xl shadow-lg hover:scale-105 transition-all"
+              >
+                {t.venues.addVenue}
+              </Link>
+            )}
+            <button
+              onClick={() => setListOpen((o) => !o)}
+              className="bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm text-on-surface dark:text-inverse-on-surface text-sm font-bold px-3 py-2 rounded-xl shadow-lg transition-colors border border-outline-variant/10"
             >
-              {t.venues.addVenue}
-            </Link>
-          )}
-          <button
-            onClick={() => setListOpen((o) => !o)}
-            className="bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm text-on-surface dark:text-inverse-on-surface text-sm font-bold px-3 py-2 rounded-xl shadow-lg transition-colors border border-outline-variant/10"
-          >
-            {listOpen ? t.venues.closeList : t.venues.openList}
-          </button>
+              {listOpen ? t.venues.closeList : t.venues.openList}
+            </button>
+          </div>
+        </div>
+        {/* Type filter chips */}
+        <div className="flex gap-1.5 pointer-events-auto flex-wrap">
+          {(["all", "beach", "outdoor", "indoor"] as const).map((type) => {
+            const labels = { all: t.venues.filterAll, beach: t.venues.filterBeach, outdoor: t.venues.filterOutdoor, indoor: t.venues.filterIndoor };
+            const icons = { all: "filter_list", beach: "beach_access", outdoor: "wb_sunny", indoor: "sports_volleyball" };
+            return (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold shadow backdrop-blur-sm transition-all ${
+                  typeFilter === type
+                    ? "kinetic-gradient text-on-primary shadow-primary/20"
+                    : "bg-surface-container-lowest/90 dark:bg-inverse-surface/90 text-on-surface dark:text-inverse-on-surface border border-outline-variant/10"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px] [font-style:normal]">{icons[type]}</span>
+                {labels[type]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Error banner */}
       {fetchError && (
-        <div className="absolute top-20 left-4 right-4 z-[1000] bg-error/10 border border-error/20 rounded-xl px-4 py-2 text-sm text-error font-medium">
+        <div className="absolute top-32 left-4 right-4 z-[1000] bg-error/10 border border-error/20 rounded-xl px-4 py-2 text-sm text-error font-medium">
           ⚠️ {fetchError}
         </div>
       )}
@@ -147,7 +177,7 @@ export default function VenuesPage() {
       {/* Venue list panel — sidebar on desktop, horizontal strip on mobile */}
       {listOpen && venueGroups.length > 0 && (
         <div className="
-          absolute z-[1000] left-4 top-20
+          absolute z-[1000] left-4 top-32
           right-4 md:right-auto
           flex gap-2 overflow-x-auto md:overflow-x-hidden overflow-y-hidden md:overflow-y-auto
           flex-row md:flex-col
