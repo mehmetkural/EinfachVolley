@@ -258,9 +258,22 @@ export default function MatchDetailPage() {
     return { teamA, teamB };
   }
 
+  const allTeamPlayers = [
+    ...match.participants,
+    ...Object.values(match.guests ?? {}).flat().map((g) => `guest_${g.id}`),
+  ];
+  const guestNames: Record<string, string> = {};
+  Object.values(match.guests ?? {}).flat().forEach((g) => { guestNames[`guest_${g.id}`] = g.name; });
+
+  function getPlayerName(pid: string): string {
+    if (pid.startsWith("guest_")) return guestNames[pid] ?? "Gast";
+    if (pid === user?.uid) return t.matchDetail.you;
+    return participantNames[pid] ?? "...";
+  }
+
   function handleTeamsTab() {
     setActiveTab("teams");
-    if (!teams && match) setTeams(autoBalance(match.participants));
+    if (!teams) setTeams(autoBalance(allTeamPlayers));
   }
 
   function movePlayer(uid: string, from: "teamA" | "teamB") {
@@ -691,7 +704,7 @@ export default function MatchDetailPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-black text-on-surface uppercase tracking-tight text-sm">{t.teams.title}</h2>
             <button
-              onClick={() => setTeams(autoBalance(match.participants))}
+              onClick={() => setTeams(autoBalance(allTeamPlayers))}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl kinetic-gradient text-on-primary"
             >
               <span className="material-symbols-outlined text-[14px] [font-style:normal]">shuffle</span>
@@ -699,7 +712,7 @@ export default function MatchDetailPage() {
             </button>
           </div>
 
-          {teams && match.participants.length > 0 ? (
+          {teams && allTeamPlayers.length > 0 ? (
             <>
               <p className="text-xs text-on-surface-variant mb-3 font-medium">{t.teams.tip}</p>
               <div className="grid grid-cols-2 gap-3">
@@ -712,17 +725,20 @@ export default function MatchDetailPage() {
                     </span>
                   </p>
                   <div className="space-y-1.5">
-                    {teams.teamA.map((uid) => (
+                    {teams.teamA.map((pid) => (
                       <button
-                        key={uid}
-                        onClick={() => movePlayer(uid, "teamA")}
+                        key={pid}
+                        onClick={() => movePlayer(pid, "teamA")}
                         className="w-full text-left flex items-center justify-between px-2.5 py-1.5 bg-surface-container-lowest dark:bg-surface-container rounded-xl hover:bg-primary/10 transition-colors"
                       >
-                        <span className="text-sm font-medium text-on-surface truncate">
-                          {uid === user?.uid ? t.matchDetail.you : participantNames[uid] ?? "..."}
+                        <span className="text-sm font-medium text-on-surface truncate flex items-center gap-1">
+                          {getPlayerName(pid)}
+                          {pid.startsWith("guest_") && (
+                            <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container px-1 rounded">G</span>
+                          )}
                         </span>
                         <span className="shrink-0 ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-bold">
-                          Sv.{playerLevels[uid] ?? 0}
+                          Sv.{playerLevels[pid] ?? 0}
                         </span>
                       </button>
                     ))}
@@ -738,17 +754,20 @@ export default function MatchDetailPage() {
                     </span>
                   </p>
                   <div className="space-y-1.5">
-                    {teams.teamB.map((uid) => (
+                    {teams.teamB.map((pid) => (
                       <button
-                        key={uid}
-                        onClick={() => movePlayer(uid, "teamB")}
+                        key={pid}
+                        onClick={() => movePlayer(pid, "teamB")}
                         className="w-full text-left flex items-center justify-between px-2.5 py-1.5 bg-surface-container-lowest dark:bg-surface-container rounded-xl hover:bg-tertiary/10 transition-colors"
                       >
-                        <span className="text-sm font-medium text-on-surface truncate">
-                          {uid === user?.uid ? t.matchDetail.you : participantNames[uid] ?? "..."}
+                        <span className="text-sm font-medium text-on-surface truncate flex items-center gap-1">
+                          {getPlayerName(pid)}
+                          {pid.startsWith("guest_") && (
+                            <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container px-1 rounded">G</span>
+                          )}
                         </span>
                         <span className="shrink-0 ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-tertiary/15 text-tertiary font-bold">
-                          Sv.{playerLevels[uid] ?? 0}
+                          Sv.{playerLevels[pid] ?? 0}
                         </span>
                       </button>
                     ))}
