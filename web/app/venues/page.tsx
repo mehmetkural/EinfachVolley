@@ -9,6 +9,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getDocument } from "@/services/firestore";
 import { subscribeToActiveMatches } from "@/services/matches";
 import { subscribeToVenues } from "@/services/venues";
+import { fetchVenueRatings, rateVenue } from "@/services/venueRatings";
+import type { VenueRatingData } from "@/services/venueRatings";
 import { Loader } from "@/components/Loader";
 import type { VolleyMatch } from "@/models/match";
 import type { Venue, VenueType } from "@/models/venue";
@@ -40,6 +42,7 @@ export default function VenuesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [listOpen, setListOpen] = useState(true);
   const [typeFilter, setTypeFilter] = useState<VenueType | "all">("all");
+  const [venueRating, setVenueRating] = useState<VenueRatingData | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -71,6 +74,15 @@ export default function VenuesPage() {
     };
   }, [user, loading, router]);
 
+  // Fetch ratings when a venue is selected
+  useEffect(() => {
+    if (!selected || !user) { setVenueRating(null); return; }
+    const grp = allVenueGroups.find((v) => v.venueName === selected);
+    if (!grp) return;
+    fetchVenueRatings(grp.venueId, user.uid).then(setVenueRating);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, user]);
+
   const allVenueGroups: VenueGroup[] = venues.map((v) => ({
     venueId: v.id,
     venueName: v.name,
@@ -83,12 +95,22 @@ export default function VenuesPage() {
     matches: matches.filter((m) => m.venueName === v.name),
   }));
 
-  const venueGroups = typeFilter === "all"
+  // Filter sidebar only — map always shows all venues
+  const filteredGroups: VenueGroup[] = typeFilter === "all"
     ? allVenueGroups
-    : allVenueGroups.filter((v) => v.type === typeFilter);
+    : allVenueGroups.filter((v) => {
+        if (typeFilter === "beach") return v.venueName.toLowerCase().includes("beach") || v.type === "beach";
+        return v.type === typeFilter;
+      });
 
-  const totalMatches = venueGroups.reduce((a, v) => a + v.matches.length, 0);
-  const selectedGroup = venueGroups.find((v) => v.venueName === selected) ?? null;
+  // Sort: active matches first, then alphabetically
+  const venueGroups = [...filteredGroups].sort((a, b) => {
+    if (b.matches.length !== a.matches.length) return b.matches.length - a.matches.length;
+    return a.venueName.localeCompare(b.venueName);
+  });
+
+  const totalMatches = filteredGroups.reduce((a, v) => a + v.matches.length, 0);
+  const selectedGroup = allVenueGroups.find((v) => v.venueName === selected) ?? null;
 
   function formatDate(ts: { toDate: () => Date }): string {
     return ts.toDate().toLocaleDateString(t.locale, {
@@ -99,6 +121,20 @@ export default function VenuesPage() {
     });
   }
 
+  async function handleRateVenue(score: number) {
+    if (!user || !selectedGroup) return;
+    await rateVenue(selectedGroup.venueId, user.uid, score);
+    setVenueRating((prev) => {
+      if (!prev) return { avg: score, count: 1, myScore: score };
+      const wasRated = prev.myScore !== null;
+      const newCount = wasRated ? prev.count : prev.count + 1;
+      const newAvg = wasRated
+        ? ((prev.avg * prev.count) - (prev.myScore ?? 0) + score) / prev.count
+        : ((prev.avg * prev.count) + score) / newCount;
+      return { avg: newAvg, count: newCount, myScore: score };
+    });
+  }
+
   if (loading || fetching) return <Loader className="mt-20" />;
 
   return (
@@ -106,10 +142,10 @@ export default function VenuesPage() {
       className="-mx-4 -mt-8 -mb-24 md:-mb-8 relative overflow-hidden"
       style={{ height: "calc(100vh - 64px)" }}
     >
-      {/* Map */}
+      {/* Map — always uses allVenueGroups so filter doesn't break/reload it */}
       <div className="absolute inset-0">
-        {venueGroups.length > 0 ? (
-          <MatchMap venues={venueGroups} selectedVenue={selected} onVenueSelect={setSelected} />
+        {allVenueGroups.length > 0 ? (
+          <MatchMap venues={allVenueGroups} selectedVenue={selected} onVenueSelect={setSelected} />
         ) : (
           <div className="h-full flex items-center justify-center bg-surface-container flex-col gap-3">
             <span className="material-symbols-outlined text-[48px] text-on-surface-variant">location_off</span>
@@ -144,6 +180,7 @@ export default function VenuesPage() {
             </button>
           </div>
         </div>
+
         {/* Type filter chips */}
         <div className="flex gap-1.5 pointer-events-auto flex-wrap">
           {(["all", "beach", "outdoor", "indoor"] as const).map((type) => {
@@ -174,61 +211,82 @@ export default function VenuesPage() {
         </div>
       )}
 
-      {/* Venue list panel — sidebar on desktop, horizontal strip on mobile */}
+      {/* Venue list panel — sidebar on desktop, horizontal scrolling strip on mobile */}
       {listOpen && venueGroups.length > 0 && (
-        <div className="
-          absolute z-[1000] left-4 top-32
-          right-4 md:right-auto
-          flex gap-2 overflow-x-auto md:overflow-x-hidden overflow-y-hidden md:overflow-y-auto
-          flex-row md:flex-col
-          md:bottom-4 md:w-72
-          pb-1 md:pb-0
-        ">
-          {venueGroups.map((venue) => (
-            <button
-              key={venue.venueName}
-              onClick={() => setSelected(venue.venueName)}
-              className={`shrink-0 md:shrink text-left bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-md p-3 transition-all border-2 w-44 md:w-full ${
-                selected === venue.venueName
-                  ? "border-primary"
-                  : "border-transparent hover:border-outline-variant/30"
-              }`}
-            >
-              <p className="font-bold text-sm text-on-surface dark:text-inverse-on-surface truncate">{venue.venueName}</p>
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                  venue.matches.length > 0
-                    ? "bg-primary/10 text-primary"
-                    : "bg-surface-container text-on-surface-variant"
-                }`}>
-                  {venue.matches.length > 0
-                    ? t.venues.matchCount.replace("{count}", String(venue.matches.length))
-                    : t.venues.noMatches}
-                </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                  venue.isPaid
-                    ? "bg-primary-fixed/20 text-primary"
-                    : "bg-tertiary-container/30 text-on-tertiary-container"
-                }`}>
-                  {venue.isPaid ? t.venues.paid : t.venues.free}
-                </span>
-              </div>
-              {/* Address + match times — desktop only */}
-              <p className="hidden md:flex text-xs text-on-surface-variant mt-1 truncate items-center gap-1">
-                <span className="material-symbols-outlined text-[12px]">location_on</span>
-                {venue.venueAddress}
-              </p>
-              {venue.matches.slice(0, 2).map((m) => (
-                <div key={m.id} className="hidden md:flex items-center justify-between text-xs text-on-surface-variant mt-1">
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]">event</span>
-                    {formatDate(m.date)}
-                  </span>
-                  <span>{t.venues.players.replace("{current}", String(m.currentPlayerCount)).replace("{max}", String(m.maxPlayers))}</span>
-                </div>
+        <div className="absolute z-[1000] left-4 top-32 right-4 md:right-auto md:bottom-4 md:w-72">
+          {/* Mobile: horizontal scroll with fade indicator */}
+          <div className="relative md:hidden">
+            <div className="flex gap-2 overflow-x-auto pb-1 scroll-smooth" style={{ scrollbarWidth: "none" }}>
+              {venueGroups.map((venue) => (
+                <button
+                  key={venue.venueName}
+                  onClick={() => setSelected(venue.venueName)}
+                  className={`shrink-0 text-left bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-md p-3 transition-all border-2 w-44 ${
+                    selected === venue.venueName ? "border-primary" : "border-transparent"
+                  }`}
+                >
+                  <p className="font-bold text-sm text-on-surface dark:text-inverse-on-surface truncate">{venue.venueName}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                      venue.matches.length > 0
+                        ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                        : "bg-surface-container text-on-surface-variant"
+                    }`}>
+                      {venue.matches.length > 0 ? t.venues.matchCount.replace("{count}", String(venue.matches.length)) : t.venues.noMatches}
+                    </span>
+                  </div>
+                </button>
               ))}
-            </button>
-          ))}
+              {/* Scroll hint card */}
+              <div className="shrink-0 w-6" />
+            </div>
+            {/* Right fade gradient indicating scrollability */}
+            <div className="absolute right-0 top-0 bottom-1 w-12 bg-gradient-to-l from-black/25 to-transparent pointer-events-none rounded-r-2xl flex items-center justify-end pr-1">
+              <span className="material-symbols-outlined text-white text-[16px] opacity-80">chevron_right</span>
+            </div>
+          </div>
+
+          {/* Desktop: vertical sidebar */}
+          <div className="hidden md:flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-200px)]">
+            {venueGroups.map((venue) => (
+              <button
+                key={venue.venueName}
+                onClick={() => setSelected(venue.venueName)}
+                className={`w-full text-left bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-md p-3 transition-all border-2 ${
+                  selected === venue.venueName ? "border-primary" : "border-transparent hover:border-outline-variant/30"
+                }`}
+              >
+                <p className="font-bold text-sm text-on-surface dark:text-inverse-on-surface truncate">{venue.venueName}</p>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    venue.matches.length > 0
+                      ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                      : "bg-surface-container text-on-surface-variant"
+                  }`}>
+                    {venue.matches.length > 0 ? t.venues.matchCount.replace("{count}", String(venue.matches.length)) : t.venues.noMatches}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    venue.isPaid ? "bg-primary-fixed/20 text-primary" : "bg-tertiary-container/30 text-on-tertiary-container"
+                  }`}>
+                    {venue.isPaid ? t.venues.paid : t.venues.free}
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-1 truncate flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[12px]">location_on</span>
+                  {venue.venueAddress}
+                </p>
+                {venue.matches.slice(0, 2).map((m) => (
+                  <div key={m.id} className="flex items-center justify-between text-xs text-on-surface-variant mt-1">
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">event</span>
+                      {formatDate(m.date)}
+                    </span>
+                    <span>{t.venues.players.replace("{current}", String(m.currentPlayerCount)).replace("{max}", String(m.maxPlayers))}</span>
+                  </div>
+                ))}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -248,17 +306,12 @@ export default function VenuesPage() {
                 {selectedGroup.venueAddress}
               </a>
               <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-bold ${
-                selectedGroup.isPaid
-                  ? "bg-primary-fixed/20 text-primary"
-                  : "bg-tertiary-container/30 text-on-tertiary-container"
+                selectedGroup.isPaid ? "bg-primary-fixed/20 text-primary" : "bg-tertiary-container/30 text-on-tertiary-container"
               }`}>
                 {selectedGroup.isPaid ? t.venues.paidVenue : t.venues.freeVenue}
               </span>
             </div>
-            <button
-              onClick={() => setSelected(null)}
-              className="text-on-surface-variant hover:text-on-surface ml-2"
-            >
+            <button onClick={() => setSelected(null)} className="text-on-surface-variant hover:text-on-surface ml-2">
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
@@ -284,6 +337,34 @@ export default function VenuesPage() {
           ) : (
             <p className="text-xs text-on-surface-variant mt-2 font-medium">{t.venues.noActiveMatches}</p>
           )}
+
+          {/* Venue rating */}
+          <div className="mt-3 pt-3 border-t border-outline-variant/10">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{t.venues.rateVenue}</span>
+              {venueRating && venueRating.count > 0 && (
+                <span className="text-xs text-on-surface-variant">
+                  {venueRating.avg.toFixed(1)} ★ · {t.venues.ratingCount.replace("{count}", String(venueRating.count))}
+                </span>
+              )}
+              {venueRating && venueRating.count === 0 && (
+                <span className="text-xs text-on-surface-variant">{t.venues.noRatings}</span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => handleRateVenue(star)}
+                  className={`text-xl leading-none transition-transform active:scale-110 ${
+                    (venueRating?.myScore ?? 0) >= star ? "text-amber-400" : "text-outline-variant"
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
 
           <Link
             href={`/matches/new?venue=${selectedGroup.venueId}`}

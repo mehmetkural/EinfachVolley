@@ -163,6 +163,9 @@ export const translations = {
       filterBeach: "Beach",
       filterOutdoor: "Açık Saha",
       filterIndoor: "Kapalı Saha",
+      rateVenue: "Sahayı Puan Ver",
+      ratingCount: "{count} değerlendirme",
+      noRatings: "İlk değerlendiren sen ol",
     },
     profile: {
       title: "Profil",
@@ -412,6 +415,9 @@ export const translations = {
       filterBeach: "Beach",
       filterOutdoor: "Outdoor",
       filterIndoor: "Indoor",
+      rateVenue: "Rate Venue",
+      ratingCount: "{count} ratings",
+      noRatings: "Be the first to rate",
     },
     profile: {
       title: "Profile",
@@ -661,6 +667,9 @@ export const translations = {
       filterBeach: "Beach",
       filterOutdoor: "Freiplatz",
       filterIndoor: "Halle",
+      rateVenue: "Halle bewerten",
+      ratingCount: "{count} Bewertungen",
+      noRatings: "Sei der Erste",
     },
     profile: {
       title: "Profil",
