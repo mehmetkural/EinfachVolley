@@ -42,7 +42,7 @@ export function MatchCard({ match, onJoin, isJoined }: MatchCardProps) {
             <button
               type="button"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`https://www.google.com/maps?q=${match.latitude},${match.longitude}`, "_blank", "noopener,noreferrer"); }}
-              className="text-xs text-on-surface-variant mt-0.5 truncate hover:text-primary hover:underline text-left w-full"
+              className="text-xs text-primary underline mt-0.5 truncate text-left w-full"
             >
               {match.venueAddress}
             </button>

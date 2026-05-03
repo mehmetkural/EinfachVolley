@@ -16,6 +16,8 @@ import {
 import { completeMatch, submitRating, getMyRatingsForMatch } from "@/services/ratings";
 import { getDocument } from "@/services/firestore";
 import { getVenueByName } from "@/services/venues";
+import { subscribeToMessages, sendMessage } from "@/services/chat";
+import type { ChatMessage } from "@/services/chat";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { Loader } from "@/components/Loader";
@@ -79,6 +81,11 @@ export default function MatchDetailPage() {
   const [venuePhotos, setVenuePhotos] = useState<string[]>([]);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"detail" | "chat">("detail");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) { router.push("/sign-in"); return; }
@@ -119,6 +126,18 @@ export default function MatchDetailPage() {
       if (v?.photoUrls?.length) setVenuePhotos(v.photoUrls);
     });
   }, [match?.venueName]);
+
+  useEffect(() => {
+    if (activeTab !== "chat") return;
+    const unsub = subscribeToMessages(id, setMessages);
+    return unsub;
+  }, [activeTab, id]);
+
+  useEffect(() => {
+    if (activeTab === "chat") {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, activeTab]);
 
   if (loading || fetching) return <Loader className="mt-20" />;
   if (!match) return (
@@ -185,6 +204,20 @@ export default function MatchDetailPage() {
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
   }
+
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user || !chatInput.trim()) return;
+    setSendingMessage(true);
+    try {
+      await sendMessage(id, user.uid, user.displayName ?? user.email ?? "Anonim", chatInput.trim());
+      setChatInput("");
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
+  const showDetail = activeTab === "detail" || !isParticipant;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -256,7 +289,7 @@ export default function MatchDetailPage() {
               href={`https://www.google.com/maps?q=${match.latitude},${match.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 font-medium hover:text-primary hover:underline w-fit"
+              className="text-sm text-primary dark:text-primary-fixed mt-1 flex items-center gap-1 font-medium underline w-fit"
             >
               <span className="material-symbols-outlined text-[14px]">location_on</span>
               {match.venueAddress}
@@ -294,7 +327,7 @@ export default function MatchDetailPage() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[16px] text-tertiary">person</span>
-            {match.organizerName}
+            {participantNames[match.organizerId] ?? match.organizerName}
           </div>
         </div>
 
@@ -305,8 +338,34 @@ export default function MatchDetailPage() {
         )}
       </Card>
 
+      {/* Tab switcher — only for participants */}
+      {isParticipant && (
+        <div className="flex gap-1 bg-surface-container-low dark:bg-surface-container rounded-2xl p-1">
+          <button
+            onClick={() => setActiveTab("detail")}
+            className={`flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${
+              activeTab === "detail"
+                ? "bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface shadow-sm"
+                : "text-on-surface-variant"
+            }`}
+          >
+            {t.chat.tabDetail}
+          </button>
+          <button
+            onClick={() => setActiveTab("chat")}
+            className={`flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${
+              activeTab === "chat"
+                ? "bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface shadow-sm"
+                : "text-on-surface-variant"
+            }`}
+          >
+            {t.chat.tabChat}
+          </button>
+        </div>
+      )}
+
       {/* Actions */}
-      {!isCancelled && !isCompleted && (
+      {showDetail && !isCancelled && !isCompleted && (
         <Card>
           <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">{t.matchDetail.actions}</h2>
           {error && (
@@ -344,7 +403,7 @@ export default function MatchDetailPage() {
       )}
 
       {/* Complete panel */}
-      {showComplete && (
+      {showDetail && showComplete && (
         <Card>
           <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-1">{t.matchDetail.completeTitle}</h2>
           <p className="text-sm text-on-surface-variant mb-4 font-medium">{t.matchDetail.completeDesc}</p>
@@ -391,7 +450,7 @@ export default function MatchDetailPage() {
       )}
 
       {/* Rating panel */}
-      {isCompleted && iAttended && otherAttendees.length > 0 && (
+      {showDetail && isCompleted && iAttended && otherAttendees.length > 0 && (
         <Card>
           <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-1">{t.matchDetail.ratingTitle}</h2>
           <p className="text-sm text-on-surface-variant mb-4 font-medium">{t.matchDetail.ratingDesc}</p>
@@ -433,7 +492,7 @@ export default function MatchDetailPage() {
       )}
 
       {/* Add guest */}
-      {isParticipant && !isCancelled && !isCompleted && (
+      {showDetail && isParticipant && !isCancelled && !isCompleted && (
         <Card>
           <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">{t.matchDetail.addGuest}</h2>
           <div className="flex gap-2">
@@ -472,6 +531,7 @@ export default function MatchDetailPage() {
       )}
 
       {/* Participants */}
+      {showDetail && (
       <Card>
         <h2 className="font-black text-on-surface uppercase tracking-tight text-sm mb-3">
           {t.matchDetail.participants.replace("{current}", String(match.currentPlayerCount)).replace("{max}", String(match.maxPlayers))}
@@ -510,6 +570,51 @@ export default function MatchDetailPage() {
           ))}
         </div>
       </Card>
+      )}
+
+      {/* Chat panel */}
+      {!showDetail && (
+        <Card>
+          <div className="h-80 overflow-y-auto flex flex-col gap-3 pb-2">
+            {messages.length === 0 ? (
+              <p className="text-center text-on-surface-variant text-sm font-medium py-10">{t.chat.noMessages}</p>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className={`flex flex-col gap-0.5 ${msg.senderId === user?.uid ? "items-end" : "items-start"}`}>
+                  <span className="text-xs text-on-surface-variant px-1">
+                    {msg.senderId === user?.uid ? t.chat.you : msg.senderName}
+                    {msg.createdAt && (
+                      <span className="ml-1.5 text-outline-variant">
+                        {msg.createdAt.toDate().toLocaleTimeString(t.locale, { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </span>
+                  <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm font-medium break-words ${
+                    msg.senderId === user?.uid
+                      ? "bg-primary text-on-primary rounded-tr-sm"
+                      : "bg-surface-container-high dark:bg-surface-container text-on-surface rounded-tl-sm"
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <form onSubmit={handleSendMessage} className="flex gap-2 pt-3 border-t border-outline-variant/10 mt-1">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder={t.chat.placeholder}
+              maxLength={500}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-surface-container-low dark:bg-surface-container text-on-surface text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary border-none placeholder:text-outline-variant"
+            />
+            <Button type="submit" size="sm" loading={sendingMessage} disabled={!chatInput.trim()}>
+              {t.chat.send}
+            </Button>
+          </form>
+        </Card>
+      )}
     </div>
   );
 }

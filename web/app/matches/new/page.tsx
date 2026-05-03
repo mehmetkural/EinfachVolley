@@ -7,6 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { collection, addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/client";
 import { getVenues } from "@/services/venues";
+import { getDocument } from "@/services/firestore";
+import type { UserProfile } from "@/models/user";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Loader } from "@/components/Loader";
@@ -97,7 +99,7 @@ function NewMatchForm() {
         pricePerPlayer: parseFloat(form.pricePerPlayer),
         notes: form.notes,
         organizerId: user.uid,
-        organizerName: user.displayName ?? user.email ?? "Anonim",
+        organizerName: (await getDocument<UserProfile>("users", user.uid))?.displayName ?? user.displayName ?? user.email ?? "Anonim",
         participants: [user.uid],
         guests: {},
         status: "active",
@@ -192,7 +194,7 @@ function NewMatchForm() {
                   href={`https://www.google.com/maps?q=${selectedVenue.latitude},${selectedVenue.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 text-xs text-primary dark:text-primary-fixed font-medium flex items-center gap-1 hover:underline w-fit"
+                  className="mt-2 text-xs text-primary dark:text-primary-fixed font-medium flex items-center gap-1 underline w-fit"
                 >
                   <span className="material-symbols-outlined text-[14px]">location_on</span>
                   {selectedVenue.address}

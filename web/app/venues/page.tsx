@@ -144,48 +144,52 @@ export default function VenuesPage() {
         </div>
       )}
 
-      {/* Venue list panel */}
+      {/* Venue list panel — sidebar on desktop, horizontal strip on mobile */}
       {listOpen && venueGroups.length > 0 && (
-        <div className="absolute top-20 left-4 bottom-4 z-[1000] w-72 flex flex-col gap-2 overflow-y-auto">
+        <div className="
+          absolute z-[1000] left-4 top-20
+          right-4 md:right-auto
+          flex gap-2 overflow-x-auto md:overflow-x-hidden overflow-y-hidden md:overflow-y-auto
+          flex-row md:flex-col
+          md:bottom-4 md:w-72
+          pb-1 md:pb-0
+        ">
           {venueGroups.map((venue) => (
             <button
               key={venue.venueName}
               onClick={() => setSelected(venue.venueName)}
-              className={`w-full text-left bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-md p-3 transition-all border-2 ${
+              className={`shrink-0 md:shrink text-left bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-md p-3 transition-all border-2 w-44 md:w-full ${
                 selected === venue.venueName
                   ? "border-primary"
                   : "border-transparent hover:border-outline-variant/30"
               }`}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-bold text-sm text-on-surface dark:text-inverse-on-surface truncate">{venue.venueName}</p>
-                  <p className="text-xs text-on-surface-variant mt-0.5 truncate flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]">location_on</span>
-                    {venue.venueAddress}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    venue.matches.length > 0
-                      ? "bg-primary/10 text-primary"
-                      : "bg-surface-container text-on-surface-variant"
-                  }`}>
-                    {venue.matches.length > 0
-                      ? t.venues.matchCount.replace("{count}", String(venue.matches.length))
-                      : t.venues.noMatches}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    venue.isPaid
-                      ? "bg-primary-fixed/20 text-primary"
-                      : "bg-tertiary-container/30 text-on-tertiary-container"
-                  }`}>
-                    {venue.isPaid ? t.venues.paid : t.venues.free}
-                  </span>
-                </div>
+              <p className="font-bold text-sm text-on-surface dark:text-inverse-on-surface truncate">{venue.venueName}</p>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                  venue.matches.length > 0
+                    ? "bg-primary/10 text-primary"
+                    : "bg-surface-container text-on-surface-variant"
+                }`}>
+                  {venue.matches.length > 0
+                    ? t.venues.matchCount.replace("{count}", String(venue.matches.length))
+                    : t.venues.noMatches}
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                  venue.isPaid
+                    ? "bg-primary-fixed/20 text-primary"
+                    : "bg-tertiary-container/30 text-on-tertiary-container"
+                }`}>
+                  {venue.isPaid ? t.venues.paid : t.venues.free}
+                </span>
               </div>
+              {/* Address + match times — desktop only */}
+              <p className="hidden md:flex text-xs text-on-surface-variant mt-1 truncate items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">location_on</span>
+                {venue.venueAddress}
+              </p>
               {venue.matches.slice(0, 2).map((m) => (
-                <div key={m.id} className="flex items-center justify-between text-xs text-on-surface-variant mt-1">
+                <div key={m.id} className="hidden md:flex items-center justify-between text-xs text-on-surface-variant mt-1">
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[12px]">event</span>
                     {formatDate(m.date)}
@@ -200,7 +204,7 @@ export default function VenuesPage() {
 
       {/* Selected venue panel */}
       {selectedGroup && (
-        <div className="absolute bottom-4 right-4 z-[1000] w-72 bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-outline-variant/10">
+        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:w-72 z-[1000] bg-surface-container-lowest/90 dark:bg-inverse-surface/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-outline-variant/10">
           <div className="flex items-start justify-between mb-2">
             <div>
               <h3 className="font-black text-on-surface dark:text-inverse-on-surface italic uppercase">{selectedGroup.venueName}</h3>
@@ -208,7 +212,7 @@ export default function VenuesPage() {
                 href={`https://www.google.com/maps?q=${selectedGroup.latitude},${selectedGroup.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary dark:text-primary-fixed mt-0.5 flex items-center gap-1 hover:underline w-fit"
+                className="text-xs text-primary dark:text-primary-fixed mt-0.5 flex items-center gap-1 underline w-fit"
               >
                 <span className="material-symbols-outlined text-[12px]">location_on</span>
                 {selectedGroup.venueAddress}

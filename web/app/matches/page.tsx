@@ -19,6 +19,8 @@ export default function MatchesPage() {
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [pastOpen, setPastOpen] = useState(false);
+  const [myMatchesOnly, setMyMatchesOnly] = useState(false);
+  const [hiddenPastIds, setHiddenPastIds] = useState<Set<string>>(new Set());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -27,6 +29,9 @@ export default function MatchesPage() {
       return;
     }
     if (!user) return;
+
+    const stored = localStorage.getItem(`hiddenPast_${user.uid}`);
+    if (stored) setHiddenPastIds(new Set(JSON.parse(stored)));
 
     const unsubscribe = subscribeToActiveMatches((data, err) => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -54,15 +59,30 @@ export default function MatchesPage() {
     await joinMatch(matchId, user.uid);
   }
 
+  function hidePastMatch(matchId: string) {
+    if (!user) return;
+    const next = new Set(hiddenPastIds);
+    next.add(matchId);
+    setHiddenPastIds(next);
+    localStorage.setItem(`hiddenPast_${user.uid}`, JSON.stringify(Array.from(next)));
+  }
+
   if (loading || fetching) return <Loader className="mt-20" />;
+
+  const uid = user?.uid ?? "";
+  const visibleMatches = myMatchesOnly
+    ? matches.filter((m) => m.participants.includes(uid))
+    : matches;
+  const visiblePast = pastMatches.filter((m) => !hiddenPastIds.has(m.id));
+  const hiddenCount = hiddenPastIds.size;
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-8 pt-2">
+      <div className="flex items-center justify-between mb-6 pt-2">
         <div>
           <h1 className="text-4xl font-black tracking-tight text-on-surface italic uppercase">{t.matches.title}</h1>
           <p className="text-sm text-on-surface-variant mt-1 font-medium">
-            {t.matches.available.replace("{count}", String(matches.length))}
+            {t.matches.available.replace("{count}", String(visibleMatches.length))}
           </p>
         </div>
         <Link
@@ -73,13 +93,37 @@ export default function MatchesPage() {
         </Link>
       </div>
 
+      {/* Filter chips */}
+      <div className="flex gap-2 mb-5">
+        <button
+          onClick={() => setMyMatchesOnly(false)}
+          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
+            !myMatchesOnly
+              ? "kinetic-gradient text-on-primary shadow-sm"
+              : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+          }`}
+        >
+          {t.matches.filterAll}
+        </button>
+        <button
+          onClick={() => setMyMatchesOnly(true)}
+          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
+            myMatchesOnly
+              ? "kinetic-gradient text-on-primary shadow-sm"
+              : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+          }`}
+        >
+          {t.matches.filterMine}
+        </button>
+      </div>
+
       {fetchError && (
         <div className="mb-4 px-4 py-3 bg-error/10 border border-error/20 rounded-xl text-sm text-error font-medium">
           ⚠️ {fetchError}
         </div>
       )}
 
-      {matches.length === 0 ? (
+      {visibleMatches.length === 0 ? (
         <div className="text-center py-20 text-on-surface-variant">
           <div className="w-20 h-20 bg-surface-container-low dark:bg-surface-container rounded-3xl flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-outlined text-[40px] text-on-surface-variant">sports_volleyball</span>
@@ -89,12 +133,12 @@ export default function MatchesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {matches.map((match) => (
+          {visibleMatches.map((match) => (
             <MatchCard
               key={match.id}
               match={match}
               onJoin={handleJoin}
-              isJoined={match.participants.includes(user?.uid ?? "")}
+              isJoined={match.participants.includes(uid)}
             />
           ))}
         </div>
@@ -111,13 +155,30 @@ export default function MatchesPage() {
           </button>
           {pastOpen && (
             <div className="space-y-4 mt-3">
-              {pastMatches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  isJoined={match.participants.includes(user?.uid ?? "")}
-                />
+              {visiblePast.map((match) => (
+                <div key={match.id} className="relative">
+                  <MatchCard match={match} isJoined={match.participants.includes(uid)} />
+                  <button
+                    onClick={() => hidePastMatch(match.id)}
+                    title={t.matches.hideMatch}
+                    className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors text-xs font-bold z-10"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">close</span>
+                  </button>
+                </div>
               ))}
+              {hiddenCount > 0 && (
+                <button
+                  onClick={() => {
+                    if (!user) return;
+                    setHiddenPastIds(new Set());
+                    localStorage.removeItem(`hiddenPast_${user.uid}`);
+                  }}
+                  className="w-full text-center text-xs text-on-surface-variant hover:text-on-surface font-medium py-2"
+                >
+                  {t.matches.showHidden.replace("{count}", String(hiddenCount))}
+                </button>
+              )}
             </div>
           )}
         </div>

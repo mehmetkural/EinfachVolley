@@ -43,6 +43,10 @@ export const translations = {
       noMatches: "Aktif maç yok",
       noMatchesDesc: "Şu an katılabilecek bir maç bulunmuyor.",
       pastMatches: "Geçmiş Maçlar ({count})",
+      filterAll: "Tümü",
+      filterMine: "Benim Maçlarım",
+      hideMatch: "Gizle",
+      showHidden: "{count} gizlendi · göster",
       firestoreError: "Firestore bağlantısı kurulamadı. Firebase Console → Firestore → Rules → allow read: if request.auth != null",
     },
     matchCard: {
@@ -129,6 +133,14 @@ export const translations = {
       errorRating: "Puan gönderilemedi.",
       shareLink: "Linki Kopyala",
       linkCopied: "✓ Kopyalandı!",
+    },
+    chat: {
+      tabDetail: "Detay",
+      tabChat: "Sohbet",
+      placeholder: "Mesaj yaz...",
+      send: "Gönder",
+      noMessages: "Henüz mesaj yok. İlk mesajı sen gönder!",
+      you: "Sen",
     },
     venues: {
       title: "Sahalar",
@@ -276,6 +288,10 @@ export const translations = {
       noMatches: "No active matches",
       noMatchesDesc: "There are no matches to join right now.",
       pastMatches: "Past Matches ({count})",
+      filterAll: "All",
+      filterMine: "My Matches",
+      hideMatch: "Hide",
+      showHidden: "Show {count} hidden",
       firestoreError: "Could not connect to Firestore. Firebase Console → Firestore → Rules → allow read: if request.auth != null",
     },
     matchCard: {
@@ -362,6 +378,14 @@ export const translations = {
       errorRating: "Failed to submit ratings.",
       shareLink: "Copy Link",
       linkCopied: "✓ Copied!",
+    },
+    chat: {
+      tabDetail: "Details",
+      tabChat: "Chat",
+      placeholder: "Write a message...",
+      send: "Send",
+      noMessages: "No messages yet. Say hello!",
+      you: "You",
     },
     venues: {
       title: "Venues",
@@ -509,6 +533,10 @@ export const translations = {
       noMatches: "Keine aktiven Spiele",
       noMatchesDesc: "Momentan gibt es keine Spiele zum Beitreten.",
       pastMatches: "Vergangene Spiele ({count})",
+      filterAll: "Alle",
+      filterMine: "Meine Spiele",
+      hideMatch: "Ausblenden",
+      showHidden: "{count} ausgeblendet · anzeigen",
       firestoreError: "Verbindung zu Firestore fehlgeschlagen. Firebase Console → Firestore → Rules → allow read: if request.auth != null",
     },
     matchCard: {
@@ -595,6 +623,14 @@ export const translations = {
       errorRating: "Bewertungen konnten nicht gesendet werden.",
       shareLink: "Link kopieren",
       linkCopied: "✓ Kopiert!",
+    },
+    chat: {
+      tabDetail: "Details",
+      tabChat: "Chat",
+      placeholder: "Nachricht schreiben...",
+      send: "Senden",
+      noMessages: "Noch keine Nachrichten. Sag Hallo!",
+      you: "Du",
     },
     venues: {
       title: "Hallen",
