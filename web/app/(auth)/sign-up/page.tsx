@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { updateProfile } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { signUp } from "@/firebase/auth";
+import { db } from "@/firebase/client";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,6 +15,7 @@ import { trackEvent } from "@/lib/analytics";
 export default function SignUpPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -27,7 +31,19 @@ export default function SignUpPage() {
     }
     setLoading(true);
     try {
-      await signUp(email, password);
+      const credential = await signUp(email, password);
+      const user = credential.user;
+
+      // Set display name in Firebase Auth profile
+      await updateProfile(user, { displayName: displayName.trim() });
+
+      // Create Firestore user document
+      await setDoc(doc(db, "users", user.uid), {
+        displayName: displayName.trim(),
+        email: user.email,
+        createdAt: serverTimestamp(),
+      });
+
       trackEvent("sign_up_success", { method: "email" });
       router.push("/dashboard");
     } catch (err: unknown) {
@@ -47,6 +63,15 @@ export default function SignUpPage() {
 
         <div className="bg-surface-container-lowest dark:bg-surface-container rounded-3xl p-8 border-l-4 border-primary shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              id="displayName"
+              type="text"
+              label={t.auth.displayName}
+              placeholder={t.auth.displayNamePlaceholder}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+            />
             <Input
               id="email"
               type="email"

@@ -71,7 +71,7 @@ export default function MatchesPage() {
 
   const uid = user?.uid ?? "";
   const visibleMatches = myMatchesOnly
-    ? matches.filter((m) => m.participants.includes(uid))
+    ? matches.filter((m) => (m.participants ?? []).includes(uid))
     : matches;
   const visiblePast = pastMatches.filter((m) => !hiddenPastIds.has(m.id));
   const hiddenCount = hiddenPastIds.size;

@@ -100,6 +100,7 @@ export default function VenuesPage() {
     ? allVenueGroups
     : allVenueGroups.filter((v) => {
         if (typeFilter === "beach") return v.venueName.toLowerCase().includes("beach") || v.type === "beach";
+        if (typeFilter === "outdoor") return v.type === "outdoor" || (!v.type && !v.venueName.toLowerCase().includes("beach"));
         return v.type === typeFilter;
       });
 

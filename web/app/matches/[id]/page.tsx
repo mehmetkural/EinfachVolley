@@ -210,7 +210,8 @@ export default function MatchDetailPage() {
     if (!user || !chatInput.trim()) return;
     setSendingMessage(true);
     try {
-      await sendMessage(id, user.uid, user.displayName ?? user.email ?? "Anonim", chatInput.trim());
+      const senderName = participantNames[user.uid] ?? user.displayName ?? user.email ?? "Anonim";
+      await sendMessage(id, user.uid, senderName, chatInput.trim());
       setChatInput("");
     } finally {
       setSendingMessage(false);
