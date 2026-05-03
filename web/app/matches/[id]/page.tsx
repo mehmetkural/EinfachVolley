@@ -81,11 +81,15 @@ export default function MatchDetailPage() {
   const [venuePhotos, setVenuePhotos] = useState<string[]>([]);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"detail" | "chat">("detail");
+  const [activeTab, setActiveTab] = useState<"detail" | "chat" | "teams">("detail");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const seenMsgLenRef = useRef(0);
+  const [playerLevels, setPlayerLevels] = useState<Record<string, number>>({});
+  const [teams, setTeams] = useState<{ teamA: string[]; teamB: string[] } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) { router.push("/sign-in"); return; }
@@ -104,6 +108,13 @@ export default function MatchDetailPage() {
               const next = { ...prev };
               profiles.forEach((p, i) => {
                 next[missing[i]] = p?.displayName ?? p?.email ?? missing[i].slice(0, 8);
+              });
+              return next;
+            });
+            setPlayerLevels((prev) => {
+              const next = { ...prev };
+              profiles.forEach((p, i) => {
+                next[missing[i]] = p?.skillLevel ?? 0;
               });
               return next;
             });
@@ -127,11 +138,24 @@ export default function MatchDetailPage() {
     });
   }, [match?.venueName]);
 
+  // Always subscribe so we can count unread messages on other tabs
   useEffect(() => {
-    if (activeTab !== "chat") return;
+    if (!user) return;
     const unsub = subscribeToMessages(id, setMessages);
     return unsub;
-  }, [activeTab, id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.uid]);
+
+  // Track unread messages when not on chat tab
+  useEffect(() => {
+    if (activeTab === "chat") {
+      setUnreadCount(0);
+      seenMsgLenRef.current = messages.length;
+    } else {
+      const newCount = messages.length - seenMsgLenRef.current;
+      if (newCount > 0) setUnreadCount(newCount);
+    }
+  }, [messages, activeTab]);
 
   useEffect(() => {
     if (activeTab === "chat") {
@@ -216,6 +240,35 @@ export default function MatchDetailPage() {
     } finally {
       setSendingMessage(false);
     }
+  }
+
+  // Serpentine draft: sorts by skill desc, alternates A/B in pairs so sums are balanced
+  function autoBalance(participants: string[]): { teamA: string[]; teamB: string[] } {
+    const sorted = [...participants].sort((a, b) => (playerLevels[b] ?? 0) - (playerLevels[a] ?? 0));
+    const teamA: string[] = [];
+    const teamB: string[] = [];
+    sorted.forEach((uid, i) => {
+      const pair = Math.floor(i / 2);
+      if (pair % 2 === 0) {
+        (i % 2 === 0 ? teamA : teamB).push(uid);
+      } else {
+        (i % 2 === 0 ? teamB : teamA).push(uid);
+      }
+    });
+    return { teamA, teamB };
+  }
+
+  function handleTeamsTab() {
+    setActiveTab("teams");
+    if (!teams && match) setTeams(autoBalance(match.participants));
+  }
+
+  function movePlayer(uid: string, from: "teamA" | "teamB") {
+    setTeams((prev) => {
+      if (!prev) return prev;
+      const to: "teamA" | "teamB" = from === "teamA" ? "teamB" : "teamA";
+      return { ...prev, [from]: prev[from].filter((u) => u !== uid), [to]: [...prev[to], uid] };
+    });
   }
 
   const showDetail = activeTab === "detail" || !isParticipant;
@@ -354,13 +407,28 @@ export default function MatchDetailPage() {
           </button>
           <button
             onClick={() => setActiveTab("chat")}
-            className={`flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${
+            className={`relative flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${
               activeTab === "chat"
                 ? "bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface shadow-sm"
                 : "text-on-surface-variant"
             }`}
           >
             {t.chat.tabChat}
+            {unreadCount > 0 && activeTab !== "chat" && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-error text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={handleTeamsTab}
+            className={`flex-1 py-2 text-sm font-bold rounded-xl transition-colors ${
+              activeTab === "teams"
+                ? "bg-surface-container-lowest dark:bg-inverse-surface text-on-surface dark:text-inverse-on-surface shadow-sm"
+                : "text-on-surface-variant"
+            }`}
+          >
+            {t.teams.tab}
           </button>
         </div>
       )}
@@ -574,7 +642,7 @@ export default function MatchDetailPage() {
       )}
 
       {/* Chat panel */}
-      {!showDetail && (
+      {activeTab === "chat" && isParticipant && (
         <Card>
           <div className="h-80 overflow-y-auto flex flex-col gap-3 pb-2">
             {messages.length === 0 ? (
@@ -614,6 +682,83 @@ export default function MatchDetailPage() {
               {t.chat.send}
             </Button>
           </form>
+        </Card>
+      )}
+
+      {/* Teams panel */}
+      {activeTab === "teams" && isParticipant && (
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-black text-on-surface uppercase tracking-tight text-sm">{t.teams.title}</h2>
+            <button
+              onClick={() => setTeams(autoBalance(match.participants))}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl kinetic-gradient text-on-primary"
+            >
+              <span className="material-symbols-outlined text-[14px] [font-style:normal]">shuffle</span>
+              {t.teams.autoBalance}
+            </button>
+          </div>
+
+          {teams && match.participants.length > 0 ? (
+            <>
+              <p className="text-xs text-on-surface-variant mb-3 font-medium">{t.teams.tip}</p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Team A */}
+                <div className="bg-primary/5 rounded-2xl p-3">
+                  <p className="text-xs font-black text-primary uppercase tracking-widest mb-2 flex items-center justify-between">
+                    <span>{t.teams.teamA}</span>
+                    <span className="text-on-surface-variant font-medium normal-case">
+                      ∑{teams.teamA.reduce((s, u) => s + (playerLevels[u] ?? 0), 0)}
+                    </span>
+                  </p>
+                  <div className="space-y-1.5">
+                    {teams.teamA.map((uid) => (
+                      <button
+                        key={uid}
+                        onClick={() => movePlayer(uid, "teamA")}
+                        className="w-full text-left flex items-center justify-between px-2.5 py-1.5 bg-surface-container-lowest dark:bg-surface-container rounded-xl hover:bg-primary/10 transition-colors"
+                      >
+                        <span className="text-sm font-medium text-on-surface truncate">
+                          {uid === user?.uid ? t.matchDetail.you : participantNames[uid] ?? "..."}
+                        </span>
+                        <span className="shrink-0 ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-bold">
+                          Sv.{playerLevels[uid] ?? 0}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Team B */}
+                <div className="bg-tertiary/5 rounded-2xl p-3">
+                  <p className="text-xs font-black text-tertiary uppercase tracking-widest mb-2 flex items-center justify-between">
+                    <span>{t.teams.teamB}</span>
+                    <span className="text-on-surface-variant font-medium normal-case">
+                      ∑{teams.teamB.reduce((s, u) => s + (playerLevels[u] ?? 0), 0)}
+                    </span>
+                  </p>
+                  <div className="space-y-1.5">
+                    {teams.teamB.map((uid) => (
+                      <button
+                        key={uid}
+                        onClick={() => movePlayer(uid, "teamB")}
+                        className="w-full text-left flex items-center justify-between px-2.5 py-1.5 bg-surface-container-lowest dark:bg-surface-container rounded-xl hover:bg-tertiary/10 transition-colors"
+                      >
+                        <span className="text-sm font-medium text-on-surface truncate">
+                          {uid === user?.uid ? t.matchDetail.you : participantNames[uid] ?? "..."}
+                        </span>
+                        <span className="shrink-0 ml-2 text-[11px] px-1.5 py-0.5 rounded-full bg-tertiary/15 text-tertiary font-bold">
+                          Sv.{playerLevels[uid] ?? 0}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-center py-8 text-sm text-on-surface-variant font-medium">{t.teams.noParticipants}</p>
+          )}
         </Card>
       )}
     </div>

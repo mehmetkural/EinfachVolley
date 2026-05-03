@@ -142,6 +142,15 @@ export const translations = {
       noMessages: "Henüz mesaj yok. İlk mesajı sen gönder!",
       you: "Sen",
     },
+    teams: {
+      tab: "Takımlar",
+      title: "Takım Oluşturma",
+      autoBalance: "Otomatik Dengele",
+      teamA: "Takım A",
+      teamB: "Takım B",
+      tip: "Oyuncuya tıkla → karşı takıma geçirilir",
+      noParticipants: "Katılımcı yok",
+    },
     venues: {
       title: "Sahalar",
       summary: "{venues} saha · {matches} maç",
@@ -396,6 +405,15 @@ export const translations = {
       noMessages: "No messages yet. Say hello!",
       you: "You",
     },
+    teams: {
+      tab: "Teams",
+      title: "Team Formation",
+      autoBalance: "Auto Balance",
+      teamA: "Team A",
+      teamB: "Team B",
+      tip: "Tap a player to move them to the other team",
+      noParticipants: "No participants yet",
+    },
     venues: {
       title: "Venues",
       summary: "{venues} venues · {matches} matches",
@@ -649,6 +667,15 @@ export const translations = {
       send: "Senden",
       noMessages: "Noch keine Nachrichten. Sag Hallo!",
       you: "Du",
+    },
+    teams: {
+      tab: "Teams",
+      title: "Teamaufstellung",
+      autoBalance: "Auto ausgleichen",
+      teamA: "Team A",
+      teamB: "Team B",
+      tip: "Spieler antippen → wird zum anderen Team verschoben",
+      noParticipants: "Keine Teilnehmer",
     },
     venues: {
       title: "Hallen",
